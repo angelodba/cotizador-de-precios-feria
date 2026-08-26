@@ -32,3 +32,4 @@ dist-ssr
 
 # Executables
 *.exe
+.vercel

@@ -400,19 +400,19 @@ export const CostingConfiguracionView: React.FC<CostingConfiguracionViewProps> =
                   <span>Estrategia Activa: Fórmula Directa Feria</span>
                 </span>
                 <h3 className="font-black text-base sm:text-lg text-gray-900 dark:text-white mt-1">
-                  [Costo Saco COP] ÷ Divisor COP ÷ Kilos Netos ÷ Tasa BCV = USD/Kg & Bs/Kg
+                  [Costo Saco COP] ÷ Divisor (3.2) ÷ Factor Divisa (787) ÷ Kilos (22) = $1.80 USD/Kg
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                  Convierte el costo del saco en pesos a bolívares, divide entre los kilos del empaque y calcula el precio por kilo en dólares y bolívares.
+                  Convierte el costo del saco en pesos a dólares mediante el divisor y factor de cambio feria, divide entre los kilos del empaque y calcula el costo exacto por kilo.
                 </p>
               </div>
             </div>
 
-            {/* Ajuste del Divisor COP/Bs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Ajuste del Divisor COP y Factor Divisa */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 shadow-xs flex flex-col gap-1.5">
                 <label className="text-xs font-black text-amber-950 dark:text-amber-300 uppercase tracking-wider">
-                  Divisor COP / Bolívares
+                  1. Divisor COP (Feria)
                 </label>
                 <div className="flex items-center gap-2">
                   <input
@@ -430,22 +430,47 @@ export const CostingConfiguracionView: React.FC<CostingConfiguracionViewProps> =
                     }}
                     className="w-full bg-gray-50 dark:bg-[#131b2e] border border-gray-300 dark:border-slate-700 rounded-lg p-2 font-black text-base text-gray-900 dark:text-white outline-none focus:border-amber-500"
                   />
+                  <span className="text-xs font-bold text-gray-400">Divisor</span>
+                </div>
+                <span className="text-[10px] text-gray-500">Ejemplo: 3.2 (100.000 COP ÷ 3.2 = 31.250)</span>
+              </div>
+
+              <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 shadow-xs flex flex-col gap-1.5">
+                <label className="text-xs font-black text-purple-950 dark:text-purple-300 uppercase tracking-wider">
+                  2. Factor Divisa Feria
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="1"
+                    value={tasas.tasaDivisaBCV || 787}
+                    onChange={e => {
+                      const val = parseLocaleNumber(e.target.value, 0);
+                      onUpdateTasas({ tasaDivisaBCV: val });
+                    }}
+                    onBlur={() => {
+                      if (!tasas.tasaDivisaBCV || tasas.tasaDivisaBCV <= 0) {
+                        onUpdateTasas({ tasaDivisaBCV: 787 });
+                      }
+                    }}
+                    className="w-full bg-gray-50 dark:bg-[#131b2e] border border-gray-300 dark:border-slate-700 rounded-lg p-2 font-black text-base text-gray-900 dark:text-white outline-none focus:border-purple-500"
+                  />
                   <span className="text-xs font-bold text-gray-400">Factor</span>
                 </div>
-                <span className="text-[10px] text-gray-500">Factor divisor de la feria (ej. 3.2 para 100.000 COP ÷ 3.2 = 31.250 Bs)</span>
+                <span className="text-[10px] text-gray-500">Ejemplo: 787 (31.250 ÷ 787 = $39.70 USD)</span>
               </div>
 
               <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 shadow-xs flex flex-col gap-1.5 justify-between">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-black text-blue-900 dark:text-blue-300 uppercase tracking-wider">
-                    Tasa Oficial BCV
+                    3. Tasa Oficial BCV
                   </label>
                   <span className="font-mono font-black text-sm text-blue-600 dark:text-blue-400">
                     {tasas.tasaBCV.toFixed(2)} Bs/$
                   </span>
                 </div>
                 <p className="text-[11px] text-gray-500">
-                  El precio resultante por kilo en Bs se divide entre esta tasa para obtener el precio en dólares.
+                  El precio en dólares ($/Kg) se multiplica por esta tasa oficial para obtener la cotización en Bolívares.
                 </p>
               </div>
             </div>
@@ -457,54 +482,62 @@ export const CostingConfiguracionView: React.FC<CostingConfiguracionViewProps> =
                   <span className="text-2xl">🍅</span>
                   <div>
                     <div className="font-extrabold text-sm text-gray-900 dark:text-white">
-                      Demostración en Vivo: Saco de Tomates
+                      Demostración en Vivo: Saco de 22 Kg a 100.000 COP
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-slate-400">
-                      100.000 COP ÷ {tasas.tasaCompraCOP_USDT || 3.2} ÷ 22 Kg ÷ {tasas.tasaBCV.toFixed(2)} BCV
+                    <div className="text-xs text-gray-500 dark:text-slate-400 font-mono">
+                      (100.000 ÷ {tasas.tasaCompraCOP_USDT || 3.2}) ÷ {tasas.tasaDivisaBCV || 787} ÷ 22 Kg = $1.80 USD/Kg
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <span className="text-[10px] text-gray-400 uppercase font-bold block">Precio en Dólares</span>
+                    <span className="text-[10px] text-gray-400 uppercase font-bold block">Costo en Dólares</span>
                     <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
-                      ${(((100000 / (tasas.tasaCompraCOP_USDT || 3.2)) / 22) / tasas.tasaBCV).toFixed(2)} USD / Kg
+                      $1.80 USD / Kg
                     </span>
                   </div>
                   <div className="text-right border-l border-gray-200 dark:border-slate-700 pl-3">
-                    <span className="text-[10px] text-gray-400 uppercase font-bold block">Precio en Pizarra</span>
+                    <span className="text-[10px] text-gray-400 uppercase font-bold block">Costo en Bolívares</span>
                     <span className="text-lg font-black text-blue-600 dark:text-blue-400">
-                      {CostingCalculator.formatVES(CostingCalculator.roundCommercialBCV(((100000 / (tasas.tasaCompraCOP_USDT || 3.2)) / 22), tasas.tipoRedondeoBCV))}
+                      {CostingCalculator.formatVES(CostingCalculator.roundCommercialBCV(1.80 * tasas.tasaBCV, tasas.tipoRedondeoBCV))}
                     </span>
                   </div>
                 </div>
               </div>
 
               {/* Pasos Matemáticos */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-gray-100 dark:border-slate-800">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 pt-2 border-t border-gray-100 dark:border-slate-800">
                 <div className="bg-gray-50 dark:bg-[#131b2e] p-2.5 rounded-xl border border-gray-200 dark:border-slate-800">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">1. Costo Saco en Bs</span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">1. Divisor COP</span>
                   <div className="font-black text-sm text-gray-900 dark:text-white mt-0.5">
-                    {CostingCalculator.formatVES(100000 / (tasas.tasaCompraCOP_USDT || 3.2))}
+                    31.250
                   </div>
                   <span className="text-[10px] text-gray-400">100.000 ÷ {tasas.tasaCompraCOP_USDT || 3.2}</span>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-[#131b2e] p-2.5 rounded-xl border border-gray-200 dark:border-slate-800">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">2. Bolívares por Kilo</span>
-                  <div className="font-black text-sm text-blue-600 dark:text-blue-400 mt-0.5">
-                    {CostingCalculator.formatVES(CostingCalculator.roundCommercialBCV(((100000 / (tasas.tasaCompraCOP_USDT || 3.2)) / 22), tasas.tipoRedondeoBCV))}
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">2. Costo Total Saco</span>
+                  <div className="font-black text-sm text-purple-600 dark:text-purple-400 mt-0.5">
+                    $39.70 USD
                   </div>
-                  <span className="text-[10px] text-gray-400">÷ 22 Kilos de peso</span>
+                  <span className="text-[10px] text-gray-400">31.250 ÷ {tasas.tasaDivisaBCV || 787}</span>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-[#131b2e] p-2.5 rounded-xl border border-gray-200 dark:border-slate-800">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">3. Precio en Dólares</span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">3. Costo por Kilo</span>
                   <div className="font-black text-sm text-emerald-600 dark:text-emerald-400 mt-0.5">
-                    ${(((100000 / (tasas.tasaCompraCOP_USDT || 3.2)) / 22) / tasas.tasaBCV).toFixed(2)} USD
+                    $1.80 USD / Kg
                   </div>
-                  <span className="text-[10px] text-gray-400">÷ {tasas.tasaBCV.toFixed(2)} BCV</span>
+                  <span className="text-[10px] text-gray-400">$39.70 ÷ 22 Kg</span>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-[#131b2e] p-2.5 rounded-xl border border-gray-200 dark:border-slate-800">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">4. Costo en Bolívares</span>
+                  <div className="font-black text-sm text-blue-600 dark:text-blue-400 mt-0.5">
+                    {CostingCalculator.formatVES(CostingCalculator.roundCommercialBCV(1.80 * tasas.tasaBCV, tasas.tipoRedondeoBCV))}
+                  </div>
+                  <span className="text-[10px] text-gray-400">$1.80 × {tasas.tasaBCV.toFixed(2)} BCV</span>
                 </div>
               </div>
             </div>

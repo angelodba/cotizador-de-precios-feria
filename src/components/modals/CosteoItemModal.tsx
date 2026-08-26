@@ -117,7 +117,7 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
 
   const [costoEmpaque, setCostoEmpaque] = useState<number>(90000);
   const [fleteUnitario, setFleteUnitario] = useState<number>(0.50);
-  const [mermaPorcentaje, setMermaPorcentaje] = useState<number>(5);
+  const [mermaPorcentaje, setMermaPorcentaje] = useState<number>(0);
   const [margenPorcentaje, setMargenPorcentaje] = useState<number>(30);
   const [margenMayoristaPorcentaje, setMargenMayoristaPorcentaje] = useState<number>(15);
   const [precioBaseUSDT, setPrecioBaseUSDT] = useState<number>(1.50);
@@ -135,7 +135,7 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
     monedaResultado: 'USD',
     pasos: [
       { id: 'p-1', nombre: 'Paso 1: Tasa Divisor', op: 'div', val: 3.2, tipoValor: 'manual', activo: true },
-      { id: 'p-2', nombre: 'Paso 2: Factor Divisa', op: 'div', val: 785, tipoValor: 'manual', activo: true },
+      { id: 'p-2', nombre: 'Paso 2: Factor Divisa', op: 'div', val: 787, tipoValor: 'manual', activo: true },
       { id: 'p-3', nombre: 'Paso 3: Conversión Kilo', op: 'div', val: 45, tipoValor: 'manual', activo: true }
     ]
   });
@@ -165,7 +165,7 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
       setTasaCompraPersonalizada(editingItem.tasaCompraPersonalizada || tasas.tasaBCV || 76.50);
       setCostoEmpaque(editingItem.costoEmpaque || 0);
       setFleteUnitario(editingItem.fleteUnitario || 0);
-      setMermaPorcentaje(editingItem.mermaPorcentaje ?? 5);
+      setMermaPorcentaje(editingItem.mermaPorcentaje ?? 0);
       setMargenPorcentaje(editingItem.margenPorcentaje ?? 30);
       setMargenMayoristaPorcentaje(editingItem.margenMayoristaPorcentaje ?? 15);
       setPrecioBaseUSDT(editingItem.precioBaseUSDT || (tasas.preciosBaseUSDT?.[editingItem.nombre] || 1.50));

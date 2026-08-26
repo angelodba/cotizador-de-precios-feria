@@ -555,6 +555,7 @@ export class CostingCalculator {
    */
   static calculateItem(item: ItemCosteo, tasas: TasasCosteo): ItemCosteoCalculado {
     const pesoBruto = Math.max(0.1, Number(item.pesoEmpaqueKg) || 1);
+    // Merma desactivada / 0% por requerimiento operativo de feria (kilos netos = peso bruto)
     const mermaPct = Math.max(0, Math.min(100, Number(item.mermaPorcentaje) || 0));
     const margenDetalPct = Math.max(0, Number(item.margenPorcentaje) || 0);
     const margenMayorPct = Math.max(0, Number(item.margenMayoristaPorcentaje) || 15);
@@ -565,7 +566,6 @@ export class CostingCalculator {
     const tasaProveedor = Math.max(0.01, Number(tasas.tasaProveedor) || 92.00);
     const tasaCOP = Math.max(1, Number(tasas.tasaCOP) || 3850);
 
-
     // Tasa efectiva con la que se compró el lote
     const tasaEfectivaCompra = this.resolveItemPurchaseRate(item, tasas);
 
@@ -573,7 +573,7 @@ export class CostingCalculator {
     const tieneFormulaPropia = !!(item.tipoFormulaItem && item.tipoFormulaItem !== 'heredar_global');
     const tipoFormula: TipoFormulaCosteo = tieneFormulaPropia
       ? (item.tipoFormulaItem as TipoFormulaCosteo)
-      : (tasas.tipoFormula || 'formula_csv_usdt');
+      : (tasas.tipoFormula || 'margen_porcentaje');
 
     const formulaPersonalizadaConfig: FormulaPersonalizadaCosteo = (tieneFormulaPropia && item.formulaPersonalizadaItem)
       ? item.formulaPersonalizadaItem
@@ -581,14 +581,14 @@ export class CostingCalculator {
           variableEntrada: 'costo_origen_empaque',
           monedaResultado: 'VES',
           pasos: [
-            { id: 'p-1', nombre: 'Paso 1: Divisor Compra', op: 'div', val: 3150, tipoValor: 'divisor_cop_usdt', activo: true },
+            { id: 'p-1', nombre: 'Paso 1: Divisor Compra', op: 'div', val: 3200, tipoValor: 'divisor_cop_usdt', activo: true },
             { id: 'p-2', nombre: 'Paso 2: Margen Feria', op: 'mul', val: 880, tipoValor: 'factor_margen', activo: true },
-            { id: 'p-3', nombre: 'Paso 3: Divisa Feria', op: 'div', val: 765, tipoValor: 'tasa_divisa_bcv', activo: true }
+            { id: 'p-3', nombre: 'Paso 3: Divisa Feria', op: 'div', val: 787, tipoValor: 'tasa_divisa_bcv', activo: true }
           ]
         });
 
-    // 1. Kilos Netos Aprovechables (descontando merma)
-    const factorMerma = 1 - (mermaPct / 100);
+    // 1. Kilos Netos Aprovechables (100% aprovechable, sin restar merma artificial)
+    const factorMerma = mermaPct > 0 ? (1 - mermaPct / 100) : 1;
     const kilosNetosAprovechables = Math.max(0.1, pesoBruto * factorMerma);
 
     // 2. CONVERSIONES MULTIMONEDA EXACTAS DEL COSTO DE COMPRA
@@ -600,14 +600,27 @@ export class CostingCalculator {
     let costoEmpaqueCOP = 0;
 
     if (item.monedaCosto === 'COP') {
-      // Compra en Pesos Colombianos
-      // tasaCOP = 3.850 COP/$ → tasa de mercado real para calcular el costo en USD
-      // tasaCompraCOP_USDT (3.2) es el DIVISOR FERIA para calcular PRECIO DE VENTA, no costo de compra
+      // ─── COMPRA EN PESOS COLOMBIANOS (FÓRMULA FERIA EXACTA) ───
+      // Ejemplo usuario: 100.000 COP ÷ 3.2 = 31.250 ÷ 787 = 39.70 USD
+      // Equivalente a: (100.000 ÷ 3200) ÷ 0.787 = 31.25 ÷ 0.787 = 39.7077 USD
       costoEmpaqueCOP = costoMontoIngresado;
-      costoEmpaqueUSD = tasaCOP > 0 ? (costoMontoIngresado / tasaCOP) : 0;
+
+      const rawDivisor = Number(tasas.tasaCompraCOP_USDT) || 3200;
+      const divisorNorm = rawDivisor <= 10 ? (rawDivisor * 1000) : rawDivisor; // 3.2 -> 3200
+      const rawFactor = Number(tasas.tasaDivisaBCV) || 787;
+      const factorNorm = rawFactor > 10 ? (rawFactor / 1000) : rawFactor; // 787 -> 0.787
+
+      if (divisorNorm > 0 && factorNorm > 0) {
+        costoEmpaqueUSD = (costoMontoIngresado / divisorNorm) / factorNorm;
+      } else if (tasaCOP > 0) {
+        costoEmpaqueUSD = costoMontoIngresado / tasaCOP;
+      } else {
+        costoEmpaqueUSD = 0;
+      }
+
       costoEmpaqueVES = costoEmpaqueUSD * tasaBCV;
     } else if (item.monedaCosto === 'VES') {
-      // Compra en Bolívares (convertido a USD usando la tasa de compra elegida: BCV, Paralelo, Proveedor o Tasa Personalizada)
+      // Compra en Bolívares
       costoEmpaqueVES = costoMontoIngresado;
       costoEmpaqueUSD = costoMontoIngresado / tasaEfectivaCompra;
       costoEmpaqueCOP = tasaCOP > 0 ? (costoEmpaqueUSD * tasaCOP) : 0;
