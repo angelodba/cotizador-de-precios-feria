@@ -186,15 +186,14 @@ export const HojaCosteoView: React.FC<HojaCosteoViewProps> = ({
   const totalInversionUSD = calculatedItems.reduce((acc, it) => acc + it.costoTotalEmpaqueUSD, 0);
   const totalInversionVES = totalInversionUSD * tasas.tasaBCV;
   const totalKilosBrutos = calculatedItems.reduce((acc, it) => acc + it.pesoEmpaqueKg, 0);
-  const totalKilosNetos = calculatedItems.reduce((acc, it) => acc + it.kilosNetosAprovechables, 0);
   const totalGananciaProyectadaUSD = calculatedItems.reduce((acc, it) => acc + it.gananciaTotalEmpaqueUSD, 0);
   const totalGananciaProyectadaVES = totalGananciaProyectadaUSD * tasas.tasaBCV;
   const margenPromedio = totalInversionUSD > 0 ? (totalGananciaProyectadaUSD / totalInversionUSD) * 100 : 0;
 
   const handleExportCSV = () => {
-    let csv = 'Rubro,Categoria,Empaque,Peso Bruto Kg,Merma %,Kilos Netos,Costo Compra Moneda,Monto Compra,Costo Total USD,Costo x Kilo USD,Costo x Kilo Bs,Margen Detal %,Precio Detal Kilo Bs,Precio Detal Kilo USD,Precio Mayor Kilo Bs,Precio Mayor Saco USD,Ganancia Saco USD,Ganancia Saco Bs\n';
+    let csv = 'Rubro,Categoria,Empaque,Peso Kg,Costo Compra Moneda,Monto Compra,Costo Total USD,Costo x Kilo USD,Costo x Kilo Bs,Margen Detal %,Precio Detal Kilo Bs,Precio Detal Kilo USD,Precio Mayor Kilo Bs,Precio Mayor Saco USD,Ganancia Saco USD,Ganancia Saco Bs\n';
     calculatedItems.forEach(it => {
-      csv += `"${it.nombre}","${it.categoria}","${it.tipoEmpaque}",${it.pesoEmpaqueKg},${it.mermaPorcentaje},${it.kilosNetosAprovechables},"${it.monedaCosto}",${it.costoEmpaque},${it.costoTotalEmpaqueUSD},${it.costoKiloUSD},${it.costoKiloVES},${it.margenPorcentaje},${it.precioVentaDetalKiloVES},${it.precioVentaDetalKiloUSD},${it.precioVentaMayorKiloVES},${it.precioVentaMayorEmpaqueUSD},${it.gananciaTotalEmpaqueUSD},${it.gananciaTotalEmpaqueVES}\n`;
+      csv += `"${it.nombre}","${it.categoria}","${it.tipoEmpaque}",${it.pesoEmpaqueKg},"${it.monedaCosto}",${it.costoEmpaque},${it.costoTotalEmpaqueUSD},${it.costoKiloUSD},${it.costoKiloVES},${it.margenPorcentaje},${it.precioVentaDetalKiloVES},${it.precioVentaDetalKiloUSD},${it.precioVentaMayorKiloVES},${it.precioVentaMayorEmpaqueUSD},${it.gananciaTotalEmpaqueUSD},${it.gananciaTotalEmpaqueVES}\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -314,24 +313,24 @@ export const HojaCosteoView: React.FC<HojaCosteoViewProps> = ({
           </div>
         </div>
 
-        {/* 2. Kilos Comprados & Merma */}
+        {/* 2. Kilos Comprados */}
         <div className="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-slate-800 rounded-2xl p-3.5 sm:p-5 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Kilos Netos</span>
+            <span className="text-[10px] sm:text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Total Kilaje</span>
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400 flex items-center justify-center">
               <Scale size={15} />
             </div>
           </div>
           <div className="my-1.5 sm:my-2">
             <div className="text-lg sm:text-2xl font-black text-purple-900 dark:text-white tracking-tight">
-              {totalKilosNetos.toFixed(1)} Kg
+              {totalKilosBrutos.toFixed(1)} Kg
             </div>
             <div className="text-[11px] sm:text-xs font-bold text-purple-600 dark:text-purple-400 mt-0.5">
-              Bruto: {totalKilosBrutos.toFixed(1)} Kg
+              100% Aprovechable
             </div>
           </div>
-          <div className="text-[10px] sm:text-[11px] text-amber-600 dark:text-amber-400 font-bold truncate">
-            Merma: -{(totalKilosBrutos - totalKilosNetos).toFixed(1)} Kg
+          <div className="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-bold truncate">
+            Sin deducción por merma
           </div>
         </div>
 
@@ -696,7 +695,7 @@ export const HojaCosteoView: React.FC<HojaCosteoViewProps> = ({
                 {/* Pie de Ganancia */}
                 <div className="flex items-center justify-between text-xs pt-1 border-t border-gray-100 dark:border-slate-800">
                   <span className="text-[11px] text-gray-500 dark:text-slate-400">
-                    Neto: {item.kilosNetosAprovechables} Kg (Merma {item.mermaPorcentaje}%)
+                    {item.tipoEmpaque} ({item.pesoEmpaqueKg} {item.esServicio ? 'unid' : 'Kg'})
                   </span>
                   <span className={`font-black ${isLoss ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
                     Ganancia: +{CostingCalculator.formatUSD(item.gananciaTotalEmpaqueUSD)}
@@ -730,7 +729,7 @@ export const HojaCosteoView: React.FC<HojaCosteoViewProps> = ({
                 </th>
 
                 {/* Empaque */}
-                <th className="p-3.5">Empaque / Merma</th>
+                <th className="p-3.5">Presentación / Peso</th>
 
                 {/* Costo Compra */}
                 <th
@@ -907,16 +906,16 @@ export const HojaCosteoView: React.FC<HojaCosteoViewProps> = ({
                         </div>
                       </td>
 
-                      {/* 2. Empaque y Merma */}
+                      {/* 2. Empaque y Peso */}
                       <td className="p-3.5 text-gray-700 dark:text-slate-300">
                         <div className="font-bold">
                           {item.tipoEmpaque} {item.esServicio ? `(${item.pesoEmpaqueKg} unidades)` : `de ${item.pesoEmpaqueKg} Kg`}
                         </div>
-                        <div className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
+                        <div className="text-[11px] text-gray-400 dark:text-slate-400 font-semibold">
                           {item.esServicio ? (
                             <span className="text-blue-600 dark:text-blue-400">Actividad / Tarifa Fija</span>
                           ) : (
-                            `Merma: ${item.mermaPorcentaje}% ➔ Neto: ${item.kilosNetosAprovechables} Kg`
+                            `${item.pesoEmpaqueKg} Kg aprovechables`
                           )}
                         </div>
                       </td>

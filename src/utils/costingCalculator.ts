@@ -555,8 +555,6 @@ export class CostingCalculator {
    */
   static calculateItem(item: ItemCosteo, tasas: TasasCosteo): ItemCosteoCalculado {
     const pesoBruto = Math.max(0.1, Number(item.pesoEmpaqueKg) || 1);
-    // Merma desactivada / 0% por requerimiento operativo de feria (kilos netos = peso bruto)
-    const mermaPct = Math.max(0, Math.min(100, Number(item.mermaPorcentaje) || 0));
     const margenDetalPct = Math.max(0, Number(item.margenPorcentaje) || 0);
     const margenMayorPct = Math.max(0, Number(item.margenMayoristaPorcentaje) || 15);
     
@@ -587,9 +585,8 @@ export class CostingCalculator {
           ]
         });
 
-    // 1. Kilos Netos Aprovechables (100% aprovechable, sin restar merma artificial)
-    const factorMerma = mermaPct > 0 ? (1 - mermaPct / 100) : 1;
-    const kilosNetosAprovechables = Math.max(0.1, pesoBruto * factorMerma);
+    // 1. Kilos Netos Aprovechables (100% aprovechables, sin merma)
+    const kilosNetosAprovechables = pesoBruto;
 
     // 2. CONVERSIONES MULTIMONEDA EXACTAS DEL COSTO DE COMPRA
     const costoMontoIngresado = Number(item.costoEmpaque) || 0;

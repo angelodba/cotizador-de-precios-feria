@@ -117,7 +117,6 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
 
   const [costoEmpaque, setCostoEmpaque] = useState<number>(90000);
   const [fleteUnitario, setFleteUnitario] = useState<number>(0.50);
-  const [mermaPorcentaje, setMermaPorcentaje] = useState<number>(0);
   const [margenPorcentaje, setMargenPorcentaje] = useState<number>(30);
   const [margenMayoristaPorcentaje, setMargenMayoristaPorcentaje] = useState<number>(15);
   const [precioBaseUSDT, setPrecioBaseUSDT] = useState<number>(1.50);
@@ -165,7 +164,6 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
       setTasaCompraPersonalizada(editingItem.tasaCompraPersonalizada || tasas.tasaBCV || 76.50);
       setCostoEmpaque(editingItem.costoEmpaque || 0);
       setFleteUnitario(editingItem.fleteUnitario || 0);
-      setMermaPorcentaje(editingItem.mermaPorcentaje ?? 0);
       setMargenPorcentaje(editingItem.margenPorcentaje ?? 30);
       setMargenMayoristaPorcentaje(editingItem.margenMayoristaPorcentaje ?? 15);
       setPrecioBaseUSDT(editingItem.precioBaseUSDT || (tasas.preciosBaseUSDT?.[editingItem.nombre] || 1.50));
@@ -204,7 +202,6 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
       setTasaCompraPersonalizada(tasas.tasaBCV || 76.50);
       setCostoEmpaque(100000);
       setFleteUnitario(0.50);
-      setMermaPorcentaje(0);
       setMargenPorcentaje(30);
       setMargenMayoristaPorcentaje(15);
       setPrecioBaseUSDT(1.50);
@@ -240,7 +237,6 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
         setIcono(match.icono);
         if (match.categoria === 'Servicios y Fletes') {
           setEsServicio(true);
-          setMermaPorcentaje(0);
         }
         break;
       }
@@ -330,7 +326,7 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
     tasaCompraPersonalizada,
     costoEmpaque,
     fleteUnitario,
-    mermaPorcentaje: esServicio ? 0 : mermaPorcentaje,
+    mermaPorcentaje: 0,
     margenPorcentaje,
     margenMayoristaPorcentaje,
     precioBaseUSDT,
@@ -390,7 +386,6 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
               setCategoria('Servicios y Fletes');
               setIcono('🚚');
               setTipoEmpaque('Viaje / Servicio');
-              setMermaPorcentaje(0);
             }}
             className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               esServicio ? 'bg-amber-600 text-white shadow-xs' : 'text-gray-600 dark:text-slate-400'
@@ -416,7 +411,7 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
               tasaCompraPersonalizada: tipoTasaCosto === 'personalizada' ? tasaCompraPersonalizada : undefined,
               costoEmpaque,
               fleteUnitario: esServicio ? 0 : fleteUnitario,
-              mermaPorcentaje: esServicio ? 0 : mermaPorcentaje,
+              mermaPorcentaje: 0,
               margenPorcentaje,
               margenMayoristaPorcentaje,
               precioBaseUSDT,
@@ -581,36 +576,21 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
             </div>
           </div>
 
-          {/* Peso y Merma */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="font-bold text-gray-700 dark:text-slate-200 mb-1 block">{esServicio ? 'Cantidad Base' : 'Peso del Bulto (Kg) *'}</label>
-              <input
-                type="number"
-                inputMode="decimal"
-                step="0.5"
-                min="0.1"
-                required
-                value={pesoEmpaqueKg}
-                onChange={e => setPesoEmpaqueKg(parseLocaleNumber(e.target.value, 1))}
-                className="w-full bg-gray-50 dark:bg-[#131b2e] border border-gray-300 dark:border-slate-700 rounded-xl p-2.5 font-black text-gray-900 dark:text-white text-center outline-none focus:border-blue-500 min-h-[44px]"
-              />
-            </div>
-            <div>
-              <label className="font-bold text-gray-700 dark:text-slate-200 mb-1 block">{esServicio ? 'Merma (N/A)' : 'Merma / Pérdida (%)'}</label>
-              <input
-                type="number"
-                inputMode="decimal"
-                step="1"
-                min="0"
-                max="50"
-                disabled={esServicio}
-                value={esServicio ? 0 : mermaPorcentaje}
-                onChange={e => setMermaPorcentaje(parseLocaleNumber(e.target.value, 0))}
-                placeholder="5%"
-                className="w-full bg-gray-50 dark:bg-[#131b2e] border border-gray-300 dark:border-slate-700 rounded-xl p-2.5 font-bold text-amber-600 dark:text-amber-400 text-center outline-none focus:border-blue-500 min-h-[44px] disabled:opacity-50"
-              />
-            </div>
+          {/* Peso del Bulto */}
+          <div>
+            <label className="font-bold text-gray-700 dark:text-slate-200 mb-1 block">
+              {esServicio ? 'Cantidad Base' : 'Peso del Bulto / Empaque (Kg) *'}
+            </label>
+            <input
+              type="number"
+              inputMode="decimal"
+              step="0.5"
+              min="0.1"
+              required
+              value={pesoEmpaqueKg}
+              onChange={e => setPesoEmpaqueKg(parseLocaleNumber(e.target.value, 1))}
+              className="w-full bg-gray-50 dark:bg-[#131b2e] border border-gray-300 dark:border-slate-700 rounded-xl p-2.5 font-black text-gray-900 dark:text-white text-center outline-none focus:border-blue-500 min-h-[44px]"
+            />
           </div>
 
           {/* ─── SECCIÓN DE COSTO & MONEDA DE COMPRA MULTI-TASA ─── */}
