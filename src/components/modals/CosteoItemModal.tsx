@@ -841,7 +841,7 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
                       className={`p-2 rounded-xl border text-xs font-bold flex flex-col gap-0.5 text-left ${tipoFormulaItem === 'formula_feria_3factores' ? 'bg-purple-600 text-white border-purple-600 shadow-xs' : 'bg-white dark:bg-[#0f172a] border-gray-200'}`}
                     >
                       <span>🌟 3 Factores</span>
-                      <span className="text-[10px] opacity-80">3150/880/765</span>
+                      <span className="text-[10px] opacity-80">3200/880/787</span>
                     </button>
                     <button
                       type="button"
@@ -1003,9 +1003,9 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
                                 <option value="tasa_bcv">🇻🇪 Tasa BCV ({tasas.tasaBCV.toFixed(2)})</option>
                                 <option value="tasa_paralelo">📈 Tasa Paralelo ({(tasas.tasaParalelo || 95).toFixed(2)})</option>
                                 <option value="tasa_proveedor">🤝 Tasa Proveedor ({(tasas.tasaProveedor || 92).toFixed(2)})</option>
-                                <option value="divisor_cop_usdt">🔢 Divisor CSV ({tasas.tasaCompraCOP_USDT || 3150})</option>
+                                <option value="divisor_cop_usdt">🔢 Divisor CSV ({tasas.tasaCompraCOP_USDT || 3200})</option>
                                 <option value="factor_margen">📐 Factor Margen ({tasas.factorMargenCOP || 880})</option>
-                                <option value="tasa_divisa_bcv">🏛️ Divisa Feria ({tasas.tasaDivisaBCV || 765})</option>
+                                <option value="tasa_divisa_bcv">🏛️ Divisa Feria ({tasas.tasaDivisaBCV || 787})</option>
                                 {customRatesList.map(cr => (
                                   <option key={cr.id} value={cr.id}>
                                     {cr.icono || '💵'} {cr.nombre} ({cr.valor})

@@ -82,18 +82,18 @@ export const CostingConfiguracionView: React.FC<CostingConfiguracionViewProps> =
     variableEntrada: 'costo_origen_empaque',
     monedaResultado: 'VES',
     pasos: [
-      { id: 'p-1', nombre: 'Paso 1: Divisor Compra', op: 'div', val: 3150, tipoValor: 'divisor_cop_usdt', activo: true },
+      { id: 'p-1', nombre: 'Paso 1: Divisor Compra', op: 'div', val: 3200, tipoValor: 'divisor_cop_usdt', activo: true },
       { id: 'p-2', nombre: 'Paso 2: Margen Feria', op: 'mul', val: 880, tipoValor: 'factor_margen', activo: true },
-      { id: 'p-3', nombre: 'Paso 3: Divisa Feria', op: 'div', val: 765, tipoValor: 'tasa_divisa_bcv', activo: true }
+      { id: 'p-3', nombre: 'Paso 3: Divisa Feria', op: 'div', val: 787, tipoValor: 'tasa_divisa_bcv', activo: true }
     ]
   };
 
   const pasosList: PasoFormulaCustom[] = (formulaConfig.pasos && formulaConfig.pasos.length > 0)
     ? formulaConfig.pasos
     : [
-        { id: 'p-1', nombre: 'Paso 1: Base Entrada', op: formulaConfig.op1 || 'div', val: typeof formulaConfig.val1 === 'number' ? formulaConfig.val1 : 3150, tipoValor: 'divisor_cop_usdt', activo: true },
+        { id: 'p-1', nombre: 'Paso 1: Base Entrada', op: formulaConfig.op1 || 'div', val: typeof formulaConfig.val1 === 'number' ? formulaConfig.val1 : 3200, tipoValor: 'divisor_cop_usdt', activo: true },
         { id: 'p-2', nombre: 'Paso 2: Factor Margen', op: formulaConfig.op2 || 'mul', val: typeof formulaConfig.val2 === 'number' ? formulaConfig.val2 : 880, tipoValor: 'factor_margen', activo: true },
-        { id: 'p-3', nombre: 'Paso 3: Factor Divisa', op: formulaConfig.op3 || 'div', val: typeof formulaConfig.val3 === 'number' ? formulaConfig.val3 : (formulaConfig.monedaResultado === 'USD' ? 1 : 765), tipoValor: formulaConfig.monedaResultado === 'USD' ? 'manual' : 'tasa_divisa_bcv', activo: true }
+        { id: 'p-3', nombre: 'Paso 3: Factor Divisa', op: formulaConfig.op3 || 'div', val: typeof formulaConfig.val3 === 'number' ? formulaConfig.val3 : (formulaConfig.monedaResultado === 'USD' ? 1 : 787), tipoValor: formulaConfig.monedaResultado === 'USD' ? 'manual' : 'tasa_divisa_bcv', activo: true }
       ];
 
   const handleUpdateFormulaConfig = (updated: Partial<FormulaPersonalizadaCosteo>) => {
@@ -182,24 +182,24 @@ export const CostingConfiguracionView: React.FC<CostingConfiguracionViewProps> =
       tasaProveedor: 92.00,
       tasaUSDT: 94.00,
       tasaCOP: 3850,
-      tasaCompraCOP_USDT: 3150,
+      tasaCompraCOP_USDT: 3200,
       factorMargenCOP: 880,
-      tasaDivisaBCV: 765,
-      tipoFormula: 'formula_csv_usdt',
+      tasaDivisaBCV: 787,
+      tipoFormula: 'formula_feria_3factores',
       formulaPersonalizada: {
         variableEntrada: 'costo_origen_empaque',
         monedaResultado: 'VES',
         pasos: [
-          { id: 'p-1', nombre: 'Paso 1: Divisor Compra', op: 'div', val: 3150, tipoValor: 'divisor_cop_usdt', activo: true },
+          { id: 'p-1', nombre: 'Paso 1: Divisor Compra', op: 'div', val: 3200, tipoValor: 'divisor_cop_usdt', activo: true },
           { id: 'p-2', nombre: 'Paso 2: Margen Feria', op: 'mul', val: 880, tipoValor: 'factor_margen', activo: true },
-          { id: 'p-3', nombre: 'Paso 3: Divisa Feria', op: 'div', val: 765, tipoValor: 'tasa_divisa_bcv', activo: true }
+          { id: 'p-3', nombre: 'Paso 3: Divisa Feria', op: 'div', val: 787, tipoValor: 'tasa_divisa_bcv', activo: true }
         ],
         op1: 'div',
-        val1: 3150,
+        val1: 3200,
         op2: 'mul',
         val2: 880,
         op3: 'div',
-        val3: 765
+        val3: 787
       },
       preciosBaseUSDT: CSV_DEFAULT_BASE_PRICES_USDT
     });
@@ -715,9 +715,9 @@ export const CostingConfiguracionView: React.FC<CostingConfiguracionViewProps> =
                       variableEntrada: 'costo_bulto_cop',
                       monedaResultado: 'VES',
                       pasos: [
-                        { id: 'p-1', nombre: 'Paso 1: Divisor Compra', op: 'div', val: 3150, tipoValor: 'divisor_cop_usdt', activo: true },
+                        { id: 'p-1', nombre: 'Paso 1: Divisor Compra', op: 'div', val: 3200, tipoValor: 'divisor_cop_usdt', activo: true },
                         { id: 'p-2', nombre: 'Paso 2: Margen Feria', op: 'mul', val: 880, tipoValor: 'factor_margen', activo: true },
-                        { id: 'p-3', nombre: 'Paso 3: Divisa Feria', op: 'div', val: 765, tipoValor: 'tasa_divisa_bcv', activo: true }
+                        { id: 'p-3', nombre: 'Paso 3: Divisa Feria', op: 'div', val: 787, tipoValor: 'tasa_divisa_bcv', activo: true }
                       ]
                     });
                     onShowToast('🌟 Plantilla Feria Oficial (3 Factores COP ➔ Bs) cargada.');
@@ -974,9 +974,9 @@ export const CostingConfiguracionView: React.FC<CostingConfiguracionViewProps> =
                             <option value="tasa_proveedor">🤝 Tasa Proveedor ({tasas.tasaProveedor || 92.00})</option>
                             <option value="tasa_usdt">💵 Dólar USDT ({tasas.tasaUSDT || 94.00})</option>
                             <option value="tasa_cop">🇨🇴 Tasa Pesos COP ({tasas.tasaCOP || 3850})</option>
-                            <option value="divisor_cop_usdt">Divisor CSV COP/USDT ({tasas.tasaCompraCOP_USDT || 3150})</option>
+                            <option value="divisor_cop_usdt">Divisor CSV COP/USDT ({tasas.tasaCompraCOP_USDT || 3200})</option>
                             <option value="factor_margen">Factor Margen Feria ({tasas.factorMargenCOP || 880})</option>
-                            <option value="tasa_divisa_bcv">Tasa Divisa Feria ({tasas.tasaDivisaBCV || 765})</option>
+                            <option value="tasa_divisa_bcv">Tasa Divisa Feria ({tasas.tasaDivisaBCV || 787})</option>
                           </optgroup>
 
                           {customRatesList.length > 0 && (

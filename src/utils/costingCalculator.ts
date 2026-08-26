@@ -54,7 +54,7 @@ export class CostingCalculator {
   /**
    * Conversión del Costo Base COP a USDT según la celda del CSV (90.000 COP ÷ 3150 = 28.57 USDT)
    */
-  static calculateCostoBaseUSDT(costoCOP: number, tasaDivisor: number = 3150): number {
+  static calculateCostoBaseUSDT(costoCOP: number, tasaDivisor: number = 3200): number {
     if (!tasaDivisor || tasaDivisor <= 0) return 0;
     return Number((costoCOP / tasaDivisor).toFixed(2));
   }
@@ -92,11 +92,11 @@ export class CostingCalculator {
       case 'tasa_cop':
         return { val: tasas.tasaCOP || 3850, label: `COP (${tasas.tasaCOP || 3850})` };
       case 'divisor_cop_usdt':
-        return { val: tasas.tasaCompraCOP_USDT || 3150, label: `Divisor CSV (${tasas.tasaCompraCOP_USDT || 3150})` };
+        return { val: tasas.tasaCompraCOP_USDT || 3200, label: `Divisor CSV (${tasas.tasaCompraCOP_USDT || 3200})` };
       case 'factor_margen':
         return { val: tasas.factorMargenCOP || 880, label: `Factor Margen (${tasas.factorMargenCOP || 880})` };
       case 'tasa_divisa_bcv':
-        return { val: tasas.tasaDivisaBCV || 765, label: `Divisa Feria (${tasas.tasaDivisaBCV || 765})` };
+        return { val: tasas.tasaDivisaBCV || 787, label: `Divisa Feria (${tasas.tasaDivisaBCV || 787})` };
       case 'tasa_usdt':
         return { val: tasas.tasaUSDT || 94.00, label: `USDT (${(tasas.tasaUSDT || 94.00).toFixed(2)})` };
       default:
@@ -208,7 +208,7 @@ export class CostingCalculator {
           id: 'p-1',
           nombre: 'Paso 1: Divisor Compra',
           op: cfg?.op1 || 'div',
-          val: typeof cfg?.val1 === 'number' && !isNaN(cfg.val1) ? cfg.val1 : 3150,
+          val: typeof cfg?.val1 === 'number' && !isNaN(cfg.val1) ? cfg.val1 : 3200,
           tipoValor: 'divisor_cop_usdt',
           activo: true
         },
@@ -224,7 +224,7 @@ export class CostingCalculator {
           id: 'p-3',
           nombre: 'Paso 3: Divisa Feria',
           op: cfg?.op3 || 'div',
-          val: typeof cfg?.val3 === 'number' && !isNaN(cfg.val3) ? cfg.val3 : (monedaResultado === 'USD' ? 1 : 765),
+          val: typeof cfg?.val3 === 'number' && !isNaN(cfg.val3) ? cfg.val3 : (monedaResultado === 'USD' ? 1 : 787),
           tipoValor: monedaResultado === 'USD' ? 'manual' : 'tasa_divisa_bcv',
           activo: true
         }
@@ -376,9 +376,9 @@ export class CostingCalculator {
     descripcion: string;
   } {
     const tipo = tasas.tipoFormula || 'formula_csv_usdt';
-    const tasaDivisor = tasas.tasaCompraCOP_USDT || 3150;
+    const tasaDivisor = tasas.tasaCompraCOP_USDT || 3200;
     const factorMargen = tasas.factorMargenCOP || 880;
-    const tasaDivisa = tasas.tasaDivisaBCV || 765;
+    const tasaDivisa = tasas.tasaDivisaBCV || 787;
 
     switch (tipo) {
       case 'formula_feria_3factores':
