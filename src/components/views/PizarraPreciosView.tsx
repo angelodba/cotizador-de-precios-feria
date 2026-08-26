@@ -84,13 +84,13 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
     filteredItems.forEach(item => {
       text += `${item.icono || '🥬'} *${item.nombre}*\n`;
       if (monedaPizarra === 'USD') {
-        text += `   • *${CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)} / ${item.esServicio ? item.tipoEmpaque : 'Kg'}* (${CostingCalculator.formatVES(item.precioVentaDetalKiloVES)})\n`;
+        text += `   • *${CostingCalculator.formatUSD(item.costoKiloUSD)} / ${item.esServicio ? item.tipoEmpaque : 'Kg'}* (${CostingCalculator.formatVES(item.costoKiloVES)})\n`;
       } else if (monedaPizarra === 'COP') {
-        text += `   • *${CostingCalculator.formatCOP(item.precioVentaDetalKiloCOP)} / ${item.esServicio ? item.tipoEmpaque : 'Kg'}* (${CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)} • ${CostingCalculator.formatVES(item.precioVentaDetalKiloVES)})\n`;
+        text += `   • *${CostingCalculator.formatCOP(item.costoKiloCOP)} / ${item.esServicio ? item.tipoEmpaque : 'Kg'}* (${CostingCalculator.formatUSD(item.costoKiloUSD)} • ${CostingCalculator.formatVES(item.costoKiloVES)})\n`;
       } else if (monedaPizarra === 'MULTIMONEDA') {
-        text += `   • *${CostingCalculator.formatVES(item.precioVentaDetalKiloVES)}* | *${CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)}* | *${CostingCalculator.formatCOP(item.precioVentaDetalKiloCOP)}*\n`;
+        text += `   • *${CostingCalculator.formatVES(item.costoKiloVES)}* | *${CostingCalculator.formatUSD(item.costoKiloUSD)}* | *${CostingCalculator.formatCOP(item.costoKiloCOP)}*\n`;
       } else {
-        text += `   • *${CostingCalculator.formatVES(item.precioVentaDetalKiloVES)}* (${CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)} / ${item.esServicio ? item.tipoEmpaque : 'Kg'})\n`;
+        text += `   • *${CostingCalculator.formatVES(item.costoKiloVES)}* (${CostingCalculator.formatUSD(item.costoKiloUSD)} / ${item.esServicio ? item.tipoEmpaque : 'Kg'})\n`;
       }
 
       if (!item.esServicio && item.precioVentaMayorEmpaqueVES > 0) {
@@ -439,10 +439,10 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
                     {monedaPizarra === 'USD' && (
                       <>
                         <div className="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
-                          {CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)}
+                          {CostingCalculator.formatUSD(item.costoKiloUSD)}
                         </div>
                         <div className="text-[11px] sm:text-xs font-bold text-gray-500 dark:text-slate-400">
-                          {CostingCalculator.formatVES(item.precioVentaDetalKiloVES)} • {item.esServicio ? `x ${item.tipoEmpaque}` : 'x Kg'}
+                          {CostingCalculator.formatVES(item.costoKiloVES)} • {item.esServicio ? `x ${item.tipoEmpaque}` : 'x Kg'}
                         </div>
                       </>
                     )}
@@ -450,10 +450,10 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
                     {monedaPizarra === 'COP' && (
                       <>
                         <div className="text-lg sm:text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">
-                          {CostingCalculator.formatCOP(item.precioVentaDetalKiloCOP)}
+                          {CostingCalculator.formatCOP(item.costoKiloCOP)}
                         </div>
                         <div className="text-[11px] sm:text-xs font-bold text-gray-500 dark:text-slate-400">
-                          {CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)} • {CostingCalculator.formatVES(item.precioVentaDetalKiloVES)}
+                          {CostingCalculator.formatUSD(item.costoKiloUSD)} • {CostingCalculator.formatVES(item.costoKiloVES)}
                         </div>
                       </>
                     )}
@@ -461,10 +461,10 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
                     {monedaPizarra === 'MULTIMONEDA' && (
                       <>
                         <div className="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
-                          {CostingCalculator.formatVES(item.precioVentaDetalKiloVES)}
+                          {CostingCalculator.formatVES(item.costoKiloVES)}
                         </div>
                         <div className="text-[11px] sm:text-xs font-extrabold text-blue-600 dark:text-blue-400">
-                          {CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)} • {CostingCalculator.formatCOP(item.precioVentaDetalKiloCOP)}
+                          {CostingCalculator.formatUSD(item.costoKiloUSD)} • {CostingCalculator.formatCOP(item.costoKiloCOP)}
                         </div>
                       </>
                     )}
@@ -472,10 +472,10 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
                     {monedaPizarra === 'VES' && (
                       <>
                         <div className="text-lg sm:text-2xl font-black text-blue-600 dark:text-blue-400 tracking-tight">
-                          {CostingCalculator.formatVES(item.precioVentaDetalKiloVES)}
+                          {CostingCalculator.formatVES(item.costoKiloVES)}
                         </div>
                         <div className="text-[11px] sm:text-xs font-bold text-gray-500 dark:text-slate-400">
-                          {CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)} {item.esServicio ? `x ${item.tipoEmpaque}` : 'x Kg'}
+                          {CostingCalculator.formatUSD(item.costoKiloUSD)} {item.esServicio ? `x ${item.tipoEmpaque}` : 'x Kg'}
                         </div>
                       </>
                     )}
@@ -495,9 +495,9 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
                   <th className="p-3">Rubro</th>
                   <th className="p-3">Categoría</th>
                   <th className="p-3 text-center">Presentación</th>
-                  <th className="p-3 text-right">Precio ($ USD)</th>
-                  <th className="p-3 text-right">Precio (COP)</th>
-                  <th className="p-3 text-right font-black text-blue-600 dark:text-blue-400">Precio Oficial (Bs.)</th>
+                  <th className="p-3 text-right">Precio ($ USD / Kg)</th>
+                  <th className="p-3 text-right">Precio (COP / Kg)</th>
+                  <th className="p-3 text-right font-black text-blue-600 dark:text-blue-400">Precio Oficial (Bs / Kg)</th>
                   <th className="p-3 text-right">Mayor Saco (Bs.)</th>
                 </tr>
               </thead>
@@ -515,13 +515,13 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
                       {item.tipoEmpaque} ({item.pesoEmpaqueKg} Kg)
                     </td>
                     <td className="p-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
-                      {CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)}
+                      {CostingCalculator.formatUSD(item.costoKiloUSD)}
                     </td>
                     <td className="p-3 text-right font-bold text-amber-600 dark:text-amber-400">
-                      {CostingCalculator.formatCOP(item.precioVentaDetalKiloCOP)}
+                      {CostingCalculator.formatCOP(item.costoKiloCOP)}
                     </td>
                     <td className="p-3 text-right font-black text-sm text-blue-600 dark:text-blue-400">
-                      {CostingCalculator.formatVES(item.precioVentaDetalKiloVES)}
+                      {CostingCalculator.formatVES(item.costoKiloVES)}
                     </td>
                     <td className="p-3 text-right font-bold text-purple-600 dark:text-purple-400">
                       {item.precioVentaMayorEmpaqueVES > 0 ? CostingCalculator.formatVES(item.precioVentaMayorEmpaqueVES) : '-'}
