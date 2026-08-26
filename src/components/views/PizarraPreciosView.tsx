@@ -14,30 +14,25 @@ import {
   Sparkles,
   Tag,
   PackageCheck,
-  DollarSign,
-  RotateCcw,
-  X,
-  Pencil,
-  CheckCircle2
+  Coins
 } from 'lucide-react';
 import type { ItemCosteo, TasasCosteo, CostingTab } from '../../types/costing';
 import { CostingCalculator } from '../../utils/costingCalculator';
-import { copyToClipboardMobile, shareMobileOrWhatsApp, hapticFeedback, downloadFileMobile, parseLocaleNumber } from '../../utils/mobileUtils';
+import { copyToClipboardMobile, shareMobileOrWhatsApp, hapticFeedback, downloadFileMobile } from '../../utils/mobileUtils';
 
 interface PizarraPreciosViewProps {
   items: ItemCosteo[];
   tasas: TasasCosteo;
-  onUpdateItem?: (item: ItemCosteo) => void;
   onNavigateTab: (tab: CostingTab) => void;
   onShowToast: (msg: string) => void;
 }
 
 type ViewMode = 'grid' | 'table';
+type MonedaPizarra = 'VES' | 'USD' | 'COP' | 'MULTIMONEDA';
 
 export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
   items,
   tasas,
-  onUpdateItem,
   onNavigateTab,
   onShowToast
 }) => {
@@ -45,14 +40,11 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  
+  // Selector de moneda activa para la Pizarra
+  const [monedaPizarra, setMonedaPizarra] = useState<MonedaPizarra>('VES');
 
-  // Estado para el modal de fijación de precio individual
-  const [selectedItemForPrice, setSelectedItemForPrice] = useState<ItemCosteo | null>(null);
-  const [modalMode, setModalMode] = useState<'automatico' | 'manual_usd' | 'manual_ves'>('automatico');
-  const [customUSD, setCustomUSD] = useState<number>(1.50);
-  const [customVES, setCustomVES] = useState<number>(100);
-
-  // Calcular todos los items con el motor de costeo
+  // Calcular todos los items con el motor de costeo (100% vinculados a la Hoja de Costeo)
   const calculatedItems = useMemo(() => {
     return items.map(item => CostingCalculator.calculateItem(item, tasas));
   }, [items, tasas]);
@@ -81,72 +73,26 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
     window.print();
   };
 
-  const openPriceModal = (item: ItemCosteo) => {
-    hapticFeedback('light');
-    const calc = CostingCalculator.calculateItem(item, tasas);
-    setSelectedItemForPrice(item);
-    
-    if (item.modoPrecioPizarra === 'manual_usd') {
-      setModalMode('manual_usd');
-      setCustomUSD(item.precioManualFijadoUSD || calc.precioVentaDetalKiloUSD);
-      setCustomVES(Math.round((item.precioManualFijadoUSD || calc.precioVentaDetalKiloUSD) * tasas.tasaBCV));
-    } else if (item.modoPrecioPizarra === 'manual_ves') {
-      setModalMode('manual_ves');
-      setCustomVES(item.precioManualFijadoVES || calc.precioVentaDetalKiloVES);
-      setCustomUSD(Number(((item.precioManualFijadoVES || calc.precioVentaDetalKiloVES) / tasas.tasaBCV).toFixed(2)));
-    } else {
-      setModalMode('automatico');
-      setCustomUSD(calc.precioVentaDetalKiloUSD);
-      setCustomVES(calc.precioVentaDetalKiloVES);
-    }
-  };
-
-  const handleSaveCustomPrice = () => {
-    if (!selectedItemForPrice || !onUpdateItem) return;
-    hapticFeedback('success');
-
-    let updated: ItemCosteo = { ...selectedItemForPrice };
-
-    if (modalMode === 'manual_usd') {
-      updated = {
-        ...updated,
-        modoPrecioPizarra: 'manual_usd',
-        precioManualFijadoUSD: customUSD,
-        precioManualFijadoVES: Math.round(customUSD * tasas.tasaBCV)
-      };
-      onShowToast(`🎯 Precio de ${updated.nombre} fijado en $${customUSD.toFixed(2)} USD.`);
-    } else if (modalMode === 'manual_ves') {
-      updated = {
-        ...updated,
-        modoPrecioPizarra: 'manual_ves',
-        precioManualFijadoVES: customVES,
-        precioManualFijadoUSD: Number((customVES / tasas.tasaBCV).toFixed(2))
-      };
-      onShowToast(`🎯 Precio de ${updated.nombre} fijado en ${customVES} Bs.`);
-    } else {
-      updated = {
-        ...updated,
-        modoPrecioPizarra: 'automatico',
-        precioManualFijadoUSD: undefined,
-        precioManualFijadoVES: undefined
-      };
-      onShowToast(`🔄 Precio de ${updated.nombre} restablecido al cálculo automático.`);
-    }
-
-    onUpdateItem(updated);
-    setSelectedItemForPrice(null);
-  };
-
   const getWhatsAppText = () => {
     let text = `📢 *LISTA OFICIAL DE PRECIOS — FERIA LOS CAFETEROS*\n`;
     text += `📅 *Fecha:* ${new Date().toLocaleDateString('es-VE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}\n`;
     text += `🇻🇪 *Tasa Oficial BCV:* ${tasas.tasaBCV.toFixed(2)} Bs/$\n`;
+    text += `🇨🇴 *Tasa COP:* ${tasas.tasaCOP.toLocaleString('es-VE')} COP/$\n`;
     text += `-------------------------------------------\n`;
     text += `🛒 *PRECIOS DE VENTA POR KILO (AL DETAL):*\n\n`;
 
     filteredItems.forEach(item => {
       text += `${item.icono || '🥬'} *${item.nombre}*\n`;
-      text += `   • *${CostingCalculator.formatVES(item.precioVentaDetalKiloVES)}* (${CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)} / ${item.esServicio ? item.tipoEmpaque : 'Kg'})\n`;
+      if (monedaPizarra === 'USD') {
+        text += `   • *${CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)} / ${item.esServicio ? item.tipoEmpaque : 'Kg'}* (${CostingCalculator.formatVES(item.precioVentaDetalKiloVES)})\n`;
+      } else if (monedaPizarra === 'COP') {
+        text += `   • *${CostingCalculator.formatCOP(item.precioVentaDetalKiloCOP)} / ${item.esServicio ? item.tipoEmpaque : 'Kg'}* (${CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)} • ${CostingCalculator.formatVES(item.precioVentaDetalKiloVES)})\n`;
+      } else if (monedaPizarra === 'MULTIMONEDA') {
+        text += `   • *${CostingCalculator.formatVES(item.precioVentaDetalKiloVES)}* | *${CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)}* | *${CostingCalculator.formatCOP(item.precioVentaDetalKiloCOP)}*\n`;
+      } else {
+        text += `   • *${CostingCalculator.formatVES(item.precioVentaDetalKiloVES)}* (${CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)} / ${item.esServicio ? item.tipoEmpaque : 'Kg'})\n`;
+      }
+
       if (!item.esServicio && item.precioVentaMayorEmpaqueVES > 0) {
         text += `   • _Mayorista (${item.tipoEmpaque} ${item.pesoEmpaqueKg}Kg): ${CostingCalculator.formatVES(item.precioVentaMayorEmpaqueVES)} (${CostingCalculator.formatUSD(item.precioVentaMayorEmpaqueUSD)})_\n`;
       }
@@ -154,7 +100,7 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
     });
 
     text += `-------------------------------------------\n`;
-    text += `✨ _Precios fijados según cotización oficial BCV._\n`;
+    text += `✨ _Precios fijados por kilo calculados por la Hoja de Costeo Oficial._\n`;
     text += `📞 _Pedidos y despachos al mayor disponibles._`;
     return text;
   };
@@ -188,9 +134,9 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
 
   const handleExportCSV = () => {
     hapticFeedback('medium');
-    let csv = 'Rubro,Categoria,Empaque,Peso Kg,Costo Total USD,Costo x Kilo USD,Costo x Kilo Bs,Margen %,Precio Detal Kilo Bs,Precio Detal Kilo USD,Precio Mayor Kilo Bs,Precio Mayor Saco USD\n';
+    let csv = 'Rubro,Categoria,Empaque,Peso Kg,Costo Total USD,Costo x Kilo USD,Costo x Kilo Bs,Margen %,Precio Detal Kilo Bs,Precio Detal Kilo USD,Precio Detal Kilo COP,Precio Mayor Kilo Bs,Precio Mayor Saco USD\n';
     filteredItems.forEach(it => {
-      csv += `"${it.nombre}","${it.categoria}","${it.tipoEmpaque}",${it.pesoEmpaqueKg},${it.costoTotalEmpaqueUSD},${it.costoKiloUSD},${it.costoKiloVES},${it.margenPorcentaje},${it.precioVentaDetalKiloVES},${it.precioVentaDetalKiloUSD},${it.precioVentaMayorKiloVES},${it.precioVentaMayorEmpaqueUSD}\n`;
+      csv += `"${it.nombre}","${it.categoria}","${it.tipoEmpaque}",${it.pesoEmpaqueKg},${it.costoTotalEmpaqueUSD},${it.costoKiloUSD},${it.costoKiloVES},${it.margenPorcentaje},${it.precioVentaDetalKiloVES},${it.precioVentaDetalKiloUSD},${it.precioVentaDetalKiloCOP},${it.precioVentaMayorKiloVES},${it.precioVentaMayorEmpaqueUSD}\n`;
     });
 
     const fileName = `lista_precios_feria_${new Date().toISOString().slice(0, 10)}.csv`;
@@ -247,6 +193,86 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
           >
             <Printer size={16} />
             <span>Imprimir</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ─── SELECTOR DE MONEDA DE VISUALIZACIÓN DE PIZARRA ─── */}
+      <div className="no-print bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-slate-800 p-3 sm:p-4 rounded-2xl shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <Coins size={18} />
+          </div>
+          <div>
+            <h3 className="text-xs sm:text-sm font-black text-gray-900 dark:text-white">
+              Moneda de Visualización de la Pizarra
+            </h3>
+            <p className="text-[11px] text-gray-500 dark:text-slate-400">
+              Precios por kilo calculados automáticamente desde la Hoja de Costeo
+            </p>
+          </div>
+        </div>
+
+        {/* Botones de Moneda (Bolívares / Dólares / Pesos / Multimoneda) */}
+        <div className="grid grid-cols-2 sm:flex items-center gap-1.5 bg-gray-100 dark:bg-[#131b2e] p-1 rounded-xl border border-gray-200 dark:border-slate-700/80">
+          <button
+            type="button"
+            onClick={() => {
+              hapticFeedback('light');
+              setMonedaPizarra('VES');
+            }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              monedaPizarra === 'VES'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            <span>🇻🇪 Bolívares (Bs.)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              hapticFeedback('light');
+              setMonedaPizarra('USD');
+            }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              monedaPizarra === 'USD'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            <span>💵 Dólares ($)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              hapticFeedback('light');
+              setMonedaPizarra('COP');
+            }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              monedaPizarra === 'COP'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            <span>🇨🇴 Pesos (COP)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              hapticFeedback('light');
+              setMonedaPizarra('MULTIMONEDA');
+            }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              monedaPizarra === 'MULTIMONEDA'
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            <span>🌐 Todas</span>
           </button>
         </div>
       </div>
@@ -375,11 +401,10 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
         {viewMode === 'grid' && filteredItems.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
             {filteredItems.map(item => {
-              const isCustom = item.modoPrecioPizarra === 'manual_usd' || item.modoPrecioPizarra === 'manual_ves';
               return (
                 <div
                   key={item.id}
-                  className="bg-gray-50 dark:bg-[#131b2e] border border-gray-200 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between shadow-xs gap-2.5 transition-all hover:border-blue-300 dark:hover:border-blue-800 group"
+                  className="bg-gray-50 dark:bg-[#131b2e] border border-gray-200 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between shadow-xs gap-2.5 transition-all hover:border-blue-300 dark:hover:border-blue-800"
                 >
                   <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                     <span className="text-2xl sm:text-3xl shrink-0">{item.icono || '🥬'}</span>
@@ -389,11 +414,6 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
                         {item.esServicio && (
                           <span className="text-[10px] font-bold bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-300 px-1.5 py-0.2 rounded shrink-0">
                             Servicio
-                          </span>
-                        )}
-                        {isCustom && (
-                          <span className="text-[9px] font-extrabold bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded shrink-0">
-                            Precio Fijado
                           </span>
                         )}
                       </h3>
@@ -414,26 +434,50 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Precios Bs y USD + Botón de Fijar Precio */}
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="text-right shrink-0">
-                      <div className="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
-                        {CostingCalculator.formatVES(item.precioVentaDetalKiloVES)}
-                      </div>
-                      <div className="text-[11px] sm:text-xs font-bold text-gray-500 dark:text-slate-400">
-                        {CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)} {item.esServicio ? `x ${item.tipoEmpaque}` : 'x Kg'}
-                      </div>
-                    </div>
+                  {/* Precios según la moneda seleccionada */}
+                  <div className="text-right shrink-0">
+                    {monedaPizarra === 'USD' && (
+                      <>
+                        <div className="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+                          {CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)}
+                        </div>
+                        <div className="text-[11px] sm:text-xs font-bold text-gray-500 dark:text-slate-400">
+                          {CostingCalculator.formatVES(item.precioVentaDetalKiloVES)} • {item.esServicio ? `x ${item.tipoEmpaque}` : 'x Kg'}
+                        </div>
+                      </>
+                    )}
 
-                    {onUpdateItem && (
-                      <button
-                        onClick={() => openPriceModal(item)}
-                        className="no-print p-2 rounded-xl bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-slate-700 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer shadow-xs min-h-[38px] min-w-[38px] flex items-center justify-center active:scale-90"
-                        title="Fijar o decidir precio de este rubro"
-                        aria-label={`Fijar precio de ${item.nombre}`}
-                      >
-                        <Pencil size={15} />
-                      </button>
+                    {monedaPizarra === 'COP' && (
+                      <>
+                        <div className="text-lg sm:text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">
+                          {CostingCalculator.formatCOP(item.precioVentaDetalKiloCOP)}
+                        </div>
+                        <div className="text-[11px] sm:text-xs font-bold text-gray-500 dark:text-slate-400">
+                          {CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)} • {CostingCalculator.formatVES(item.precioVentaDetalKiloVES)}
+                        </div>
+                      </>
+                    )}
+
+                    {monedaPizarra === 'MULTIMONEDA' && (
+                      <>
+                        <div className="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+                          {CostingCalculator.formatVES(item.precioVentaDetalKiloVES)}
+                        </div>
+                        <div className="text-[11px] sm:text-xs font-extrabold text-blue-600 dark:text-blue-400">
+                          {CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)} • {CostingCalculator.formatCOP(item.precioVentaDetalKiloCOP)}
+                        </div>
+                      </>
+                    )}
+
+                    {monedaPizarra === 'VES' && (
+                      <>
+                        <div className="text-lg sm:text-2xl font-black text-blue-600 dark:text-blue-400 tracking-tight">
+                          {CostingCalculator.formatVES(item.precioVentaDetalKiloVES)}
+                        </div>
+                        <div className="text-[11px] sm:text-xs font-bold text-gray-500 dark:text-slate-400">
+                          {CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)} {item.esServicio ? `x ${item.tipoEmpaque}` : 'x Kg'}
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -451,10 +495,10 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
                   <th className="p-3">Rubro</th>
                   <th className="p-3">Categoría</th>
                   <th className="p-3 text-center">Presentación</th>
-                  <th className="p-3 text-right">Precio Detal ($ USD)</th>
-                  <th className="p-3 text-right font-black text-emerald-600 dark:text-emerald-400">Precio Detal (Bs.)</th>
+                  <th className="p-3 text-right">Precio ($ USD)</th>
+                  <th className="p-3 text-right">Precio (COP)</th>
+                  <th className="p-3 text-right font-black text-blue-600 dark:text-blue-400">Precio Oficial (Bs.)</th>
                   <th className="p-3 text-right">Mayor Saco (Bs.)</th>
-                  {onUpdateItem && <th className="p-3 text-center no-print">Acción</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
@@ -463,9 +507,6 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
                     <td className="p-3 font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
                       <span>{item.icono || '🥬'}</span>
                       <span>{item.nombre}</span>
-                      {item.modoPrecioPizarra && item.modoPrecioPizarra !== 'automatico' && (
-                        <span className="text-[9px] font-extrabold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 px-1 rounded">Fijado</span>
-                      )}
                     </td>
                     <td className="p-3 text-gray-500 dark:text-slate-400 font-medium">
                       {item.categoria}
@@ -473,25 +514,18 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
                     <td className="p-3 text-center text-gray-600 dark:text-slate-300 font-semibold">
                       {item.tipoEmpaque} ({item.pesoEmpaqueKg} Kg)
                     </td>
-                    <td className="p-3 text-right font-bold text-gray-700 dark:text-slate-200">
+                    <td className="p-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
                       {CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)}
                     </td>
-                    <td className="p-3 text-right font-black text-sm text-emerald-600 dark:text-emerald-400">
+                    <td className="p-3 text-right font-bold text-amber-600 dark:text-amber-400">
+                      {CostingCalculator.formatCOP(item.precioVentaDetalKiloCOP)}
+                    </td>
+                    <td className="p-3 text-right font-black text-sm text-blue-600 dark:text-blue-400">
                       {CostingCalculator.formatVES(item.precioVentaDetalKiloVES)}
                     </td>
                     <td className="p-3 text-right font-bold text-purple-600 dark:text-purple-400">
                       {item.precioVentaMayorEmpaqueVES > 0 ? CostingCalculator.formatVES(item.precioVentaMayorEmpaqueVES) : '-'}
                     </td>
-                    {onUpdateItem && (
-                      <td className="p-3 text-center no-print">
-                        <button
-                          onClick={() => openPriceModal(item)}
-                          className="px-2.5 py-1 bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                        >
-                          Ajustar
-                        </button>
-                      </td>
-                    )}
                   </tr>
                 ))}
               </tbody>
@@ -501,263 +535,10 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
 
         {/* Pie de Pizarra */}
         <div className="text-center pt-3 sm:pt-4 border-t border-gray-200 dark:border-slate-800 text-[11px] sm:text-xs text-gray-400">
-          Precios oficiales fijados según cotización BCV • Venta al mayor y despachos disponibles
+          Precios oficiales fijados por Kilo según cotización BCV • Venta al mayor y despachos disponibles
         </div>
 
       </div>
-
-      {/* ─── MODAL INTERACTIVO: DECIDIR Y FIJAR PRECIO EN PIZARRA ──────── */}
-      {selectedItemForPrice && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-          <div className="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-slate-800 rounded-3xl w-full max-w-md p-5 sm:p-6 shadow-2xl flex flex-col gap-4 text-gray-900 dark:text-white animate-fade-in my-auto max-h-[92dvh] overflow-y-auto touch-scroll">
-            
-            {/* Cabecera del Modal */}
-            <div className="flex items-center justify-between border-b border-gray-200 dark:border-slate-800 pb-3">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">{selectedItemForPrice.icono || '🥬'}</span>
-                <div>
-                  <h3 className="text-base sm:text-lg font-black">{selectedItemForPrice.nombre}</h3>
-                  <p className="text-xs text-gray-500 dark:text-slate-400 font-medium">
-                    {selectedItemForPrice.categoria} • Empaque: {selectedItemForPrice.pesoEmpaqueKg} Kg
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedItemForPrice(null)}
-                className="text-gray-400 hover:text-gray-700 dark:hover:text-white p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer active:scale-90"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Referencia del Costo Real */}
-            {(() => {
-              const calc = CostingCalculator.calculateItem(selectedItemForPrice, tasas);
-              return (
-                <div className="bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/60 rounded-2xl p-3 flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-black uppercase text-blue-700 dark:text-blue-300">Costo Real por Kilo</span>
-                    <span className="text-xs font-bold text-gray-500 dark:text-slate-400">
-                      Saco: {selectedItemForPrice.costoEmpaque} {selectedItemForPrice.monedaCosto} ÷ {selectedItemForPrice.pesoEmpaqueKg} Kg
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-black text-sm text-blue-900 dark:text-blue-200">
-                      {CostingCalculator.formatUSD(calc.costoKiloUSD)} / Kg
-                    </span>
-                    <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 block">
-                      ({CostingCalculator.formatVES(calc.costoKiloVES)})
-                    </span>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Selector de Estrategia de Precio */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-extrabold uppercase text-gray-500 dark:text-slate-400 tracking-wider">
-                ¿Cómo deseas fijar el precio en la pizarra?
-              </label>
-
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    hapticFeedback('light');
-                    setModalMode('automatico');
-                  }}
-                  className={`p-2.5 rounded-xl text-xs font-black flex flex-col items-center gap-1 border transition-all cursor-pointer ${
-                    modalMode === 'automatico'
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                      : 'bg-gray-50 dark:bg-[#131b2e] border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-100'
-                  }`}
-                >
-                  <RotateCcw size={15} />
-                  <span>Por Costeo</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    hapticFeedback('light');
-                    setModalMode('manual_usd');
-                  }}
-                  className={`p-2.5 rounded-xl text-xs font-black flex flex-col items-center gap-1 border transition-all cursor-pointer ${
-                    modalMode === 'manual_usd'
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                      : 'bg-gray-50 dark:bg-[#131b2e] border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-100'
-                  }`}
-                >
-                  <DollarSign size={15} />
-                  <span>Fijar en $</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    hapticFeedback('light');
-                    setModalMode('manual_ves');
-                  }}
-                  className={`p-2.5 rounded-xl text-xs font-black flex flex-col items-center gap-1 border transition-all cursor-pointer ${
-                    modalMode === 'manual_ves'
-                      ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
-                      : 'bg-gray-50 dark:bg-[#131b2e] border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-100'
-                  }`}
-                >
-                  <span className="text-sm font-black leading-none">Bs</span>
-                  <span>Fijar en Bs</span>
-                </button>
-              </div>
-            </div>
-
-            {/* OPCIÓN 1: AUTOMÁTICO POR COSTEO */}
-            {modalMode === 'automatico' && (
-              <div className="bg-gray-50 dark:bg-[#131b2e] border border-gray-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col gap-2">
-                <span className="text-xs font-bold text-gray-600 dark:text-slate-300">
-                  El precio se calcula automáticamente con el costo de compra del saco ({selectedItemForPrice.costoEmpaque} {selectedItemForPrice.monedaCosto}) + margen deseado ({selectedItemForPrice.margenPorcentaje}%).
-                </span>
-                <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-slate-800">
-                  <span className="text-xs font-bold text-gray-400">Precio resultante:</span>
-                  <div className="text-right">
-                    <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
-                      {CostingCalculator.formatUSD(CostingCalculator.calculateItem(selectedItemForPrice, tasas).precioVentaDetalKiloUSD)} / Kg
-                    </span>
-                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400 block">
-                      {CostingCalculator.formatVES(CostingCalculator.calculateItem(selectedItemForPrice, tasas).precioVentaDetalKiloVES)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* OPCIÓN 2: FIJAR PRECIO DIRECTO EN DÓLARES */}
-            {modalMode === 'manual_usd' && (
-              <div className="bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/60 rounded-2xl p-4 flex flex-col gap-3">
-                <label className="text-xs font-black text-emerald-800 dark:text-emerald-300 uppercase">
-                  Precio de Venta Fijado en Dólares ($ USD/Kg):
-                </label>
-                
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-black text-emerald-600 dark:text-emerald-400 text-lg">$</span>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      step="0.05"
-                      min="0.10"
-                      value={customUSD}
-                      onChange={e => {
-                        const val = parseLocaleNumber(e.target.value, 1);
-                        setCustomUSD(val);
-                        setCustomVES(Math.round(val * tasas.tasaBCV));
-                      }}
-                      className="w-full pl-8 pr-3 py-2.5 bg-white dark:bg-[#0f172a] border border-emerald-300 dark:border-emerald-700 rounded-xl font-black text-xl text-emerald-950 dark:text-emerald-100 outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                  <span className="text-xs font-bold text-gray-500">USD / Kg</span>
-                </div>
-
-                {/* Botones de Selección Rápida en $ */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {[1.00, 1.20, 1.50, 1.80, 2.00, 2.50, 3.00].map(val => (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => {
-                        hapticFeedback('light');
-                        setCustomUSD(val);
-                        setCustomVES(Math.round(val * tasas.tasaBCV));
-                      }}
-                      className="px-2.5 py-1 bg-white dark:bg-[#0f172a] border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-black text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 cursor-pointer"
-                    >
-                      ${val.toFixed(2)}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="text-xs text-gray-500 dark:text-slate-400 pt-2 border-t border-emerald-200/60 dark:border-emerald-900/40 flex items-center justify-between">
-                  <span>Equivale en Pizarra (BCV {tasas.tasaBCV}):</span>
-                  <strong className="text-emerald-700 dark:text-emerald-300 text-sm font-black">
-                    {CostingCalculator.formatVES(Math.round(customUSD * tasas.tasaBCV))}
-                  </strong>
-                </div>
-              </div>
-            )}
-
-            {/* OPCIÓN 3: FIJAR PRECIO DIRECTO EN BOLÍVARES */}
-            {modalMode === 'manual_ves' && (
-              <div className="bg-purple-50/40 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900/60 rounded-2xl p-4 flex flex-col gap-3">
-                <label className="text-xs font-black text-purple-800 dark:text-purple-300 uppercase">
-                  Precio de Venta Fijado en Bolívares (Bs/Kg):
-                </label>
-                
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    step="5"
-                    min="1"
-                    value={customVES}
-                    onChange={e => {
-                      const val = parseLocaleNumber(e.target.value, 1);
-                      setCustomVES(val);
-                      setCustomUSD(Number((val / tasas.tasaBCV).toFixed(2)));
-                    }}
-                    className="w-full px-3 py-2.5 bg-white dark:bg-[#0f172a] border border-purple-300 dark:border-purple-700 rounded-xl font-black text-xl text-purple-950 dark:text-purple-100 text-center outline-none focus:border-purple-500"
-                  />
-                  <span className="text-xs font-bold text-gray-500">Bs. / Kg</span>
-                </div>
-
-                {/* Botones de Selección Rápida en Bs */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {[50, 80, 100, 120, 140, 160, 180, 200].map(val => (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => {
-                        hapticFeedback('light');
-                        setCustomVES(val);
-                        setCustomUSD(Number((val / tasas.tasaBCV).toFixed(2)));
-                      }}
-                      className="px-2.5 py-1 bg-white dark:bg-[#0f172a] border border-purple-200 dark:border-purple-800 rounded-lg text-xs font-black text-purple-800 dark:text-purple-300 hover:bg-purple-100 cursor-pointer"
-                    >
-                      {val} Bs
-                    </button>
-                  ))}
-                </div>
-
-                <div className="text-xs text-gray-500 dark:text-slate-400 pt-2 border-t border-purple-200/60 dark:border-purple-900/40 flex items-center justify-between">
-                  <span>Equivale en Dólares:</span>
-                  <strong className="text-purple-700 dark:text-purple-300 text-sm font-black">
-                    ${(customVES / tasas.tasaBCV).toFixed(2)} USD
-                  </strong>
-                </div>
-              </div>
-            )}
-
-            {/* Botones de Acción del Modal */}
-            <div className="flex items-center justify-between gap-3 pt-2 border-t border-gray-200 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={() => setSelectedItemForPrice(null)}
-                className="px-4 py-2.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-bold min-h-[42px] transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
-
-              <button
-                type="button"
-                onClick={handleSaveCustomPrice}
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-black flex items-center gap-1.5 shadow-md transition-all cursor-pointer min-h-[42px] active:scale-95"
-              >
-                <CheckCircle2 size={16} />
-                <span>Aplicar a la Pizarra</span>
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
 
     </div>
   );
