@@ -1507,20 +1507,20 @@ export const CostingConfiguracionView: React.FC<CostingConfiguracionViewProps> =
               type="number"
               inputMode="decimal"
               step="10"
-              min="100"
-              value={tasas.tasaCompraCOP_USDT === 0 ? '' : (tasas.tasaCompraCOP_USDT || 3150)}
+              min="1"
+              value={tasas.tasaCompraCOP_USDT === 0 ? '' : (tasas.tasaCompraCOP_USDT || 3200)}
               onChange={e => {
                 const val = parseLocaleNumber(e.target.value, 0);
                 onUpdateTasas({ tasaCompraCOP_USDT: val });
               }}
               onBlur={() => {
                 if (!tasas.tasaCompraCOP_USDT || tasas.tasaCompraCOP_USDT <= 0) {
-                  onUpdateTasas({ tasaCompraCOP_USDT: 3150 });
+                  onUpdateTasas({ tasaCompraCOP_USDT: 3200 });
                 }
               }}
               className="w-full bg-white dark:bg-[#0f172a] border border-gray-300 dark:border-slate-700 rounded-xl p-2.5 text-xl font-black text-purple-900 dark:text-purple-200 outline-none focus:border-purple-500"
             />
-            <span className="text-[11px] text-gray-400">Factor divisor de la feria (ej. 90.000 ÷ 3150 = 28.57 USDT).</span>
+            <span className="text-[11px] text-gray-400">Factor divisor de la feria (ej. 100.000 ÷ 3200 = 31.25 USDT).</span>
           </div>
 
           {/* Tasa USDT P2P */}

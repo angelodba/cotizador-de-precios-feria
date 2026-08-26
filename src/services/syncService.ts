@@ -426,8 +426,14 @@ class SyncService {
     const client = getSupabaseClient();
     if (!client) return;
 
+    // Si hay cambios locales pendientes en la cola, no sobreescribir con la nube
+    const pending = await db.getPendingSyncItems();
+    if (pending.some(p => p.tabla === 'items_costeo')) {
+      return;
+    }
+
     const { data, error } = await client.from('items_costeo').select('*');
-    if (error || !data) return;
+    if (error || !data || data.length === 0) return;
 
     const mappedItems: ItemCosteo[] = data.map(row => ({
       id: row.id,
@@ -435,7 +441,7 @@ class SyncService {
       categoria: row.categoria,
       icono: row.icono || '🥬',
       tipoEmpaque: row.tipo_empaque || 'Saco',
-      pesoEmpaqueKg: Number(row.peso_empaque_kg) || 1,
+      pesoEmpaqueKg: Number(row.peso_empaque_kg) || 22,
       monedaCosto: (row.moneda_costo || 'COP') as any,
       costoEmpaque: Number(row.costo_empaque) || 0,
       tipoTasaCosto: row.tipo_tasa_costo || 'bcv',
@@ -453,6 +459,7 @@ class SyncService {
       fechaActualizacion: row.fecha_actualizacion
     }));
 
+    // Solo actualizar si hay datos válidos y no se pierde información local
     if (mappedItems.length > 0) {
       await db.bulkSaveItems(mappedItems);
       this.remoteDataListeners.forEach(l => l({ items: mappedItems }));
@@ -463,11 +470,27 @@ class SyncService {
     const client = getSupabaseClient();
     if (!client) return;
 
+    // Si hay cambios locales de tasas pendientes en la cola, no sobreescribir con la nube
+    const pending = await db.getPendingSyncItems();
+    if (pending.some(p => p.tabla === 'configuracion_tasas')) {
+      return;
+    }
+
     const { data, error } = await client.from('configuracion_tasas').select('*').eq('id', 'current_rates').single();
     if (error || !data) return;
 
+    const localTasas = await db.tasas.get('current_rates');
+    // Si las tasas locales fueron actualizadas más recientemente que la nube, preservar local
+    if (localTasas && localTasas.fechaActualizacion && data.fecha_actualizacion) {
+      const localDate = new Date(localTasas.fechaActualizacion).getTime();
+      const remoteDate = new Date(data.fecha_actualizacion).getTime();
+      if (localDate >= remoteDate) {
+        return;
+      }
+    }
+
     const formulaGlobal = data.formula_global || {};
-    const tipoFormula = data.tipo_formula || formulaGlobal.tipoFormula || 'formula_csv_usdt';
+    const tipoFormula = data.tipo_formula || formulaGlobal.tipoFormula || 'formula_feria_3factores';
 
     const mappedTasas: TasasCosteo = {
       tasaBCV: Number(data.tasa_bcv) || 76.50,
@@ -475,15 +498,15 @@ class SyncService {
       tasaProveedor: Number(data.tasa_proveedor) || 92.00,
       tasaUSDT: Number(data.tasa_usdt) || 94.00,
       tasaCOP: Number(data.tasa_cop) || 3850,
-      tasaCompraCOP_USDT: Number(data.tasa_compra_cop_usdt) || 3150,
+      tasaCompraCOP_USDT: Number(data.tasa_compra_cop_usdt) || 3200,
       factorMargenCOP: Number(data.factor_margen_cop) || 880,
-      tasaDivisaBCV: Number(data.tasa_divisa_bcv) || 765,
+      tasaDivisaBCV: Number(data.tasa_divisa_bcv) || 787,
       tipoFormula: tipoFormula,
       tasasPersonalizadas: data.tasas_personalizadas || [],
       formulaPersonalizada: formulaGlobal,
       tipoRedondeoBCV: data.tipo_redondeo_bcv || 'entero',
       preciosBaseUSDT: data.precios_base_usdt || undefined,
-      fechaActualizacion: data.fecha_actualizacion || new Date().toLocaleDateString('es-VE')
+      fechaActualizacion: data.fecha_actualizacion || new Date().toISOString()
     };
 
     await db.saveTasas(mappedTasas);

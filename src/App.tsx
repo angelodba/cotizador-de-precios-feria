@@ -186,82 +186,89 @@ export function App() {
   const handleSaveItem = async (itemToSave: ItemCosteo) => {
     setItems(prev => {
       const exists = prev.some(i => i.id === itemToSave.id);
-      if (exists) {
-        return prev.map(i => (i.id === itemToSave.id ? itemToSave : i));
-      }
-      return [itemToSave, ...prev];
-    });
-
-    try {
-      await db.saveItem(itemToSave);
+      const updated = exists
+        ? prev.map(i => (i.id === itemToSave.id ? itemToSave : i))
+        : [itemToSave, ...prev];
+      
+      db.saveItem(itemToSave).catch(e => console.warn('Error guardando rubro en IndexedDB:', e));
+      try {
+        localStorage.setItem('feria_costing_items', JSON.stringify(updated));
+      } catch {}
       syncService.scheduleSync(300);
-    } catch (e) {
-      console.warn('Error guardando rubro en IndexedDB:', e);
-    }
+      return updated;
+    });
 
     showToast(`✅ ${itemToSave.nombre} guardado correctamente.`);
   };
 
   const handleDeleteItem = async (id: string) => {
-    setItems(prev => prev.filter(i => i.id !== id));
-    try {
-      await db.deleteItem(id);
+    setItems(prev => {
+      const updated = prev.filter(i => i.id !== id);
+      db.deleteItem(id).catch(e => console.warn('Error eliminando rubro en IndexedDB:', e));
+      try {
+        localStorage.setItem('feria_costing_items', JSON.stringify(updated));
+      } catch {}
       syncService.scheduleSync(300);
-    } catch (e) {
-      console.warn('Error eliminando rubro en IndexedDB:', e);
-    }
+      return updated;
+    });
     showToast('🗑️ Rubro eliminado de la hoja de costeo.');
   };
 
   const handleAddCategory = async (newCat: CategoriaDef) => {
-    let updated: CategoriaDef[] = [];
     setCustomCategories(prev => {
       if (prev.some(c => c.nombre.toLowerCase() === newCat.nombre.toLowerCase())) {
         return prev;
       }
-      updated = [...prev, newCat];
+      const updated = [...prev, newCat];
+      db.saveCategorias(updated).catch(e => console.warn('Error guardando categoría en IndexedDB:', e));
+      try {
+        localStorage.setItem('feria_costing_custom_categories', JSON.stringify(updated));
+      } catch {}
+      syncService.scheduleSync(300);
       return updated;
     });
-
-    if (updated.length > 0) {
-      try {
-        await db.saveCategorias(updated);
-        syncService.scheduleSync(300);
-      } catch (e) {
-        console.warn('Error guardando categoría en IndexedDB:', e);
-      }
-    }
 
     showToast(`✨ Categoría "${newCat.nombre}" agregada.`);
   };
 
   const handleDeleteCategory = async (catId: string) => {
-    const updated = customCategories.filter(c => c.id !== catId);
-    setCustomCategories(updated);
-    try {
-      await db.saveCategorias(updated);
+    setCustomCategories(prev => {
+      const updated = prev.filter(c => c.id !== catId);
+      db.saveCategorias(updated).catch(e => console.warn('Error eliminando categoría en IndexedDB:', e));
+      try {
+        localStorage.setItem('feria_costing_custom_categories', JSON.stringify(updated));
+      } catch {}
       syncService.scheduleSync(300);
-    } catch (e) {
-      console.warn('Error eliminando categoría en IndexedDB:', e);
-    }
+      return updated;
+    });
     showToast('🗑️ Categoría eliminada.');
   };
 
   const handleUpdateItemMargin = async (id: string, newMargin: number) => {
-    const updatedItems = items.map(i => (i.id === id ? { ...i, margenPorcentaje: newMargin } : i));
-    setItems(updatedItems);
-    const targetItem = updatedItems.find(i => i.id === id);
-    if (targetItem) {
-      await db.saveItem(targetItem);
-      syncService.scheduleSync(500);
-    }
+    setItems(prev => {
+      const updatedItems = prev.map(i => (i.id === id ? { ...i, margenPorcentaje: newMargin } : i));
+      const targetItem = updatedItems.find(i => i.id === id);
+      if (targetItem) {
+        db.saveItem(targetItem).catch(e => console.warn('Error actualizando margen en IndexedDB:', e));
+        syncService.scheduleSync(500);
+      }
+      try {
+        localStorage.setItem('feria_costing_items', JSON.stringify(updatedItems));
+      } catch {}
+      return updatedItems;
+    });
   };
 
   const handleBatchUpdateMargins = async (newMargin: number) => {
-    const updatedItems = items.map(i => ({ ...i, margenPorcentaje: newMargin }));
-    setItems(updatedItems);
-    await db.bulkSaveItems(updatedItems);
-    syncService.scheduleSync(300);
+    setItems(prev => {
+      const updatedItems = prev.map(i => ({ ...i, margenPorcentaje: newMargin }));
+      db.bulkSaveItems(updatedItems).catch(e => console.warn('Error guardando márgenes en lote:', e));
+      try {
+        localStorage.setItem('feria_costing_items', JSON.stringify(updatedItems));
+      } catch {}
+      syncService.scheduleSync(300);
+      return updatedItems;
+    });
     showToast(`✅ Margen de todos los rubros ajustado al ${newMargin}%.`);
   };
 
@@ -269,23 +276,27 @@ export function App() {
     setItems(INITIAL_COSTING_ITEMS);
     await db.items.clear();
     await db.bulkSaveItems(INITIAL_COSTING_ITEMS);
+    try {
+      localStorage.setItem('feria_costing_items', JSON.stringify(INITIAL_COSTING_ITEMS));
+    } catch {}
     syncService.scheduleSync(300);
     showToast('🔄 Lista de rubros restaurada a valores iniciales.');
   };
 
   const handleUpdateTasas = async (newTasas: Partial<TasasCosteo>, showToastFeedback = false) => {
-    const updated: TasasCosteo = {
-      ...tasas,
-      ...newTasas,
-      fechaActualizacion: new Date().toISOString()
-    };
-    setTasas(updated);
-    try {
-      await db.saveTasas(updated);
+    setTasas(prev => {
+      const updated: TasasCosteo = {
+        ...prev,
+        ...newTasas,
+        fechaActualizacion: new Date().toISOString()
+      };
+      db.saveTasas(updated).catch(e => console.warn('Error guardando tasas en IndexedDB:', e));
+      try {
+        localStorage.setItem('feria_costing_tasas', JSON.stringify(updated));
+      } catch {}
       syncService.scheduleSync(500);
-    } catch (e) {
-      console.warn('Error guardando tasas en IndexedDB:', e);
-    }
+      return updated;
+    });
     if (showToastFeedback) {
       showToast('💾 Configuración de tasas actualizada.');
     }
