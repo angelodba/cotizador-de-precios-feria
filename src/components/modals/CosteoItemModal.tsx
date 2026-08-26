@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   X,
   Trash2,
-  Package,
-  Truck,
   ChevronDown,
   ChevronUp,
   Calculator,
@@ -28,7 +26,7 @@ import type {
 } from '../../types/costing';
 import { CostingCalculator } from '../../utils/costingCalculator';
 import { parseLocaleNumber, hapticFeedback } from '../../utils/mobileUtils';
-import { CSV_DEFAULT_BASE_PRICES_USDT, DEFAULT_CATEGORIES, DEFAULT_EMPAQUES } from '../../utils/initialCostingData';
+import { DEFAULT_CATEGORIES, DEFAULT_EMPAQUES } from '../../utils/initialCostingData';
 
 interface CosteoItemModalProps {
   isOpen: boolean;
@@ -44,7 +42,7 @@ interface CosteoItemModalProps {
 const EXTENDED_ICONS = [
   '🥔', '🍅', '🧅', '🧄', '🥕', '🥬', '🍌', '🥑', '🍋', '🍇',
   '🫑', '📦', '🍠', '🍉', '🍊', '🍍', '🌽', '🍎', '🥒', '🌿',
-  '🍈', '🥦', '🚚', '🚜', '👨‍🌾', '🥩', '🧀', '🥚', '🌾', '☕',
+  '🍈', '🥦', '🚜', '👨‍🌾', '🥩', '🧀', '🥚', '🌾', '☕',
   '🏷️', '🛠️', '⚡', '🛒', '💰', '⚖️'
 ];
 
@@ -76,11 +74,6 @@ const AUTO_MATCH_RUBROS: Record<string, { categoria: CategoriaRubro; icono: stri
   cambur: { categoria: 'Frutas', icono: '🍌' },
   maiz: { categoria: 'Hortalizas', icono: '🌽' },
   maíz: { categoria: 'Hortalizas', icono: '🌽' },
-  flete: { categoria: 'Servicios y Fletes', icono: '🚚' },
-  transporte: { categoria: 'Servicios y Fletes', icono: '🚚' },
-  empaque: { categoria: 'Empaques e Insumos', icono: '📦' },
-  saco: { categoria: 'Empaques e Insumos', icono: '📦' },
-  mano: { categoria: 'Servicios y Fletes', icono: '👨‍🌾' },
   queso: { categoria: 'Víveres', icono: '🧀' },
   huevo: { categoria: 'Víveres', icono: '🥚' },
   cafe: { categoria: 'Víveres', icono: '☕' },
@@ -97,7 +90,6 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
   onDeleteItem,
   onAddCustomCategory
 }) => {
-  const [esServicio, setEsServicio] = useState<boolean>(false);
   const [nombre, setNombre] = useState<string>('');
   const [categoria, setCategoria] = useState<CategoriaRubro>('Hortalizas');
   const [isCreatingCategory, setIsCreatingCategory] = useState<boolean>(false);
@@ -110,16 +102,12 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
   const [isCreatingEmpaque, setIsCreatingEmpaque] = useState<boolean>(false);
   const [newEmpaqueName, setNewEmpaqueName] = useState<string>('');
 
-  const [pesoEmpaqueKg, setPesoEmpaqueKg] = useState<number>(45);
+  const [pesoEmpaqueKg, setPesoEmpaqueKg] = useState<number>(22);
   const [monedaCosto, setMonedaCosto] = useState<MonedaCosto>('COP');
   const [tipoTasaCosto, setTipoTasaCosto] = useState<TipoTasaCosto>('bcv');
   const [tasaCompraPersonalizada, setTasaCompraPersonalizada] = useState<number>(tasas.tasaBCV || 76.50);
 
-  const [costoEmpaque, setCostoEmpaque] = useState<number>(90000);
-  const [fleteUnitario, setFleteUnitario] = useState<number>(0.50);
-  const [margenPorcentaje, setMargenPorcentaje] = useState<number>(30);
-  const [margenMayoristaPorcentaje, setMargenMayoristaPorcentaje] = useState<number>(15);
-  const [precioBaseUSDT, setPrecioBaseUSDT] = useState<number>(1.50);
+  const [costoEmpaque, setCostoEmpaque] = useState<number>(100000);
   const [codigoSku, setCodigoSku] = useState<string>('');
   const [descripcion, setDescripcion] = useState<string>('');
   const [proveedor, setProveedor] = useState<string>('');
@@ -135,7 +123,7 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
     pasos: [
       { id: 'p-1', nombre: 'Paso 1: Tasa Divisor', op: 'div', val: 3.2, tipoValor: 'manual', activo: true },
       { id: 'p-2', nombre: 'Paso 2: Factor Divisa', op: 'div', val: 787, tipoValor: 'manual', activo: true },
-      { id: 'p-3', nombre: 'Paso 3: Conversión Kilo', op: 'div', val: 45, tipoValor: 'manual', activo: true }
+      { id: 'p-3', nombre: 'Paso 3: Conversión Kilo', op: 'div', val: 22, tipoValor: 'manual', activo: true }
     ]
   });
 
@@ -153,20 +141,15 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
 
   useEffect(() => {
     if (editingItem) {
-      setEsServicio(!!editingItem.esServicio);
       setNombre(editingItem.nombre);
       setCategoria(editingItem.categoria);
       setIcono(editingItem.icono || '🥬');
       setTipoEmpaque(editingItem.tipoEmpaque || 'Saco');
-      setPesoEmpaqueKg(editingItem.pesoEmpaqueKg || 1);
+      setPesoEmpaqueKg(editingItem.pesoEmpaqueKg || 22);
       setMonedaCosto(editingItem.monedaCosto || 'COP');
       setTipoTasaCosto(editingItem.tipoTasaCosto || (editingItem.tasaPersonalizadaId ? editingItem.tasaPersonalizadaId : 'bcv'));
       setTasaCompraPersonalizada(editingItem.tasaCompraPersonalizada || tasas.tasaBCV || 76.50);
       setCostoEmpaque(editingItem.costoEmpaque || 0);
-      setFleteUnitario(editingItem.fleteUnitario || 0);
-      setMargenPorcentaje(editingItem.margenPorcentaje ?? 30);
-      setMargenMayoristaPorcentaje(editingItem.margenMayoristaPorcentaje ?? 15);
-      setPrecioBaseUSDT(editingItem.precioBaseUSDT || (tasas.preciosBaseUSDT?.[editingItem.nombre] || 1.50));
       setCodigoSku(editingItem.codigoSku || '');
       setDescripcion(editingItem.descripcion || '');
       setProveedor(editingItem.proveedor || '');
@@ -191,7 +174,6 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
         });
       }
     } else {
-      setEsServicio(false);
       setNombre('');
       setCategoria('Hortalizas');
       setIcono('🥬');
@@ -201,10 +183,6 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
       setTipoTasaCosto('bcv');
       setTasaCompraPersonalizada(tasas.tasaBCV || 76.50);
       setCostoEmpaque(100000);
-      setFleteUnitario(0.50);
-      setMargenPorcentaje(30);
-      setMargenMayoristaPorcentaje(15);
-      setPrecioBaseUSDT(1.50);
       setCodigoSku('');
       setDescripcion('');
       setProveedor('');
@@ -222,7 +200,7 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
         ]
       });
     }
-  }, [editingItem, isOpen, tasas.preciosBaseUSDT, tasas.tasaBCV]);
+  }, [editingItem, isOpen, tasas.tasaBCV]);
 
   if (!isOpen) return null;
 
@@ -235,52 +213,39 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
       if (lower.includes(key)) {
         setCategoria(match.categoria);
         setIcono(match.icono);
-        if (match.categoria === 'Servicios y Fletes') {
-          setEsServicio(true);
-        }
-        break;
-      }
-    }
-
-    // Auto lookup de precio base en CSV si coincide
-    for (const [csvKey, basePrice] of Object.entries(CSV_DEFAULT_BASE_PRICES_USDT)) {
-      if (lower.includes(csvKey.toLowerCase())) {
-        setPrecioBaseUSDT(basePrice);
         break;
       }
     }
   };
 
-  const handleCreateCustomCategory = () => {
-    if (!newCategoryName.trim()) return;
-    const catName = newCategoryName.trim();
-    if (onAddCustomCategory) {
-      onAddCustomCategory({
-        id: `custom-cat-${Date.now()}`,
-        nombre: catName,
-        icono: newCategoryIcon,
-        esPersonalizada: true
-      });
-    }
-    setCategoria(catName);
-    setIcono(newCategoryIcon);
+  const handleSaveCustomCategory = () => {
+    if (!newCategoryName.trim() || !onAddCustomCategory) return;
+    const newCat: CategoriaDef = {
+      id: `cat-${Date.now()}`,
+      nombre: newCategoryName.trim(),
+      icono: newCategoryIcon,
+      esPersonalizada: true
+    };
+    onAddCustomCategory(newCat);
+    setCategoria(newCat.nombre);
     setIsCreatingCategory(false);
     setNewCategoryName('');
   };
 
-  const handleCreateCustomEmpaque = () => {
+  const handleSaveCustomEmpaque = () => {
     if (!newEmpaqueName.trim()) return;
     setTipoEmpaque(newEmpaqueName.trim());
     setIsCreatingEmpaque(false);
     setNewEmpaqueName('');
   };
 
+  // Pasos de fórmula personalizada
   const pasosItemList: PasoFormulaCustom[] = (formulaPersonalizadaItem.pasos && formulaPersonalizadaItem.pasos.length > 0)
     ? formulaPersonalizadaItem.pasos
     : [
-        { id: 'p-1', nombre: 'Paso 1: Tasa Divisor', op: 'div', val: 3.2, tipoValor: 'manual', activo: true },
-        { id: 'p-2', nombre: 'Paso 2: Factor Divisa', op: 'div', val: 785, tipoValor: 'manual', activo: true },
-        { id: 'p-3', nombre: 'Paso 3: Conversión Kilo', op: 'div', val: pesoEmpaqueKg || 45, tipoValor: 'manual', activo: true }
+        { id: 'p-1', nombre: 'Paso 1: Divisor Compra', op: formulaPersonalizadaItem.op1 || 'div', val: typeof formulaPersonalizadaItem.val1 === 'number' ? formulaPersonalizadaItem.val1 : 3.2, tipoValor: 'manual', activo: true },
+        { id: 'p-2', nombre: 'Paso 2: Factor Divisa', op: formulaPersonalizadaItem.op2 || 'div', val: typeof formulaPersonalizadaItem.val2 === 'number' ? formulaPersonalizadaItem.val2 : 787, tipoValor: 'manual', activo: true },
+        { id: 'p-3', nombre: 'Paso 3: Kilos Empaque', op: formulaPersonalizadaItem.op3 || 'div', val: typeof formulaPersonalizadaItem.val3 === 'number' ? formulaPersonalizadaItem.val3 : (pesoEmpaqueKg || 22), tipoValor: 'manual', activo: true }
       ];
 
   const handleUpdateFormulaPersonalizadaItem = (updated: Partial<FormulaPersonalizadaCosteo>) => {
@@ -290,13 +255,13 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
     }));
   };
 
-  const handleUpdatePasoItem = (id: string, updatedPaso: Partial<PasoFormulaCustom>) => {
-    const next = pasosItemList.map(p => p.id === id ? { ...p, ...updatedPaso } : p);
-    handleUpdateFormulaPersonalizadaItem({ pasos: next });
+  const handleUpdatePasoItem = (pasoId: string, updatedPaso: Partial<PasoFormulaCustom>) => {
+    const nextPasos = pasosItemList.map(p => (p.id === pasoId ? { ...p, ...updatedPaso } : p));
+    handleUpdateFormulaPersonalizadaItem({ pasos: nextPasos });
   };
 
   const handleAddPasoItem = () => {
-    const newId = `p-${Date.now()}`;
+    const newId = `p-${Date.now().toString().slice(-4)}`;
     const newPaso: PasoFormulaCustom = {
       id: newId,
       nombre: `Paso ${pasosItemList.length + 1}`,
@@ -316,21 +281,21 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
 
   const previewItem: ItemCosteo = {
     id: editingItem?.id || 'temp',
-    nombre: nombre || (esServicio ? 'Servicio / Actividad' : 'Rubro'),
+    nombre: nombre || 'Rubro',
     categoria,
     icono,
     tipoEmpaque,
-    pesoEmpaqueKg,
+    pesoEmpaqueKg: Math.max(0.1, pesoEmpaqueKg),
     monedaCosto,
     tipoTasaCosto,
     tasaCompraPersonalizada,
     costoEmpaque,
-    fleteUnitario,
+    fleteUnitario: 0,
     mermaPorcentaje: 0,
-    margenPorcentaje,
-    margenMayoristaPorcentaje,
-    precioBaseUSDT,
-    esServicio,
+    margenPorcentaje: 0,
+    margenMayoristaPorcentaje: 0,
+    precioBaseUSDT: 1.50,
+    esServicio: false,
     codigoSku,
     descripcion,
     proveedor,
@@ -353,8 +318,11 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-extrabold text-gray-900 dark:text-white">
-                {editingItem ? `Editar: ${editingItem.nombre}` : (esServicio ? 'Registrar Servicio' : 'Ingresar Rubro')}
+                {editingItem ? `Editar: ${editingItem.nombre}` : 'Ingresar Rubro'}
               </h3>
+              <p className="text-[11px] text-gray-500 dark:text-slate-400">
+                Costeo de adquisición y cálculo de precio de venta por kilogramo
+              </p>
             </div>
           </div>
           <button
@@ -366,58 +334,28 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
           </button>
         </div>
 
-        {/* Tipo de Registro: Rubro o Servicio */}
-        <div className="flex bg-gray-100 dark:bg-slate-800/80 p-1 rounded-xl border border-gray-200 dark:border-slate-700">
-          <button
-            type="button"
-            onClick={() => setEsServicio(false)}
-            className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              !esServicio ? 'bg-blue-600 text-white shadow-xs' : 'text-gray-600 dark:text-slate-400'
-            }`}
-          >
-            <Package size={14} />
-            <span>Rubro Agrícola / Producto</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setEsServicio(true);
-              setCategoria('Servicios y Fletes');
-              setIcono('🚚');
-              setTipoEmpaque('Viaje / Servicio');
-            }}
-            className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              esServicio ? 'bg-amber-600 text-white shadow-xs' : 'text-gray-600 dark:text-slate-400'
-            }`}
-          >
-            <Truck size={14} />
-            <span>Servicio / Flete / Mano de Obra</span>
-          </button>
-        </div>
-
         <form
           onSubmit={e => {
             e.preventDefault();
             const saved: ItemCosteo = {
               id: editingItem?.id || `cost-${Date.now()}`,
-              nombre: nombre.trim() || (esServicio ? 'Servicio / Actividad' : 'Rubro'),
+              nombre: nombre.trim() || 'Rubro',
               categoria,
               icono,
               tipoEmpaque,
-              pesoEmpaqueKg: esServicio ? (pesoEmpaqueKg || 1) : Math.max(0.1, pesoEmpaqueKg),
+              pesoEmpaqueKg: Math.max(0.1, pesoEmpaqueKg),
               monedaCosto,
               tipoTasaCosto,
               tasaCompraPersonalizada: tipoTasaCosto === 'personalizada' ? tasaCompraPersonalizada : undefined,
               costoEmpaque,
-              fleteUnitario: esServicio ? 0 : fleteUnitario,
+              fleteUnitario: 0,
               mermaPorcentaje: 0,
-              margenPorcentaje,
-              margenMayoristaPorcentaje,
-              precioBaseUSDT,
+              margenPorcentaje: 0,
+              margenMayoristaPorcentaje: 0,
+              precioBaseUSDT: 1.50,
               tipoFormulaItem,
               formulaPersonalizadaItem: tipoFormulaItem === 'formula_personalizada' ? { ...formulaPersonalizadaItem, pasos: pasosItemList } : undefined,
-              esServicio,
+              esServicio: false,
               codigoSku: codigoSku.trim() || undefined,
               descripcion: descripcion.trim() || undefined,
               proveedor: proveedor.trim() || undefined,
@@ -451,10 +389,10 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
                   key={ic}
                   type="button"
                   onClick={() => setIcono(ic)}
-                  className={`text-xl p-1.5 rounded-xl border transition-all cursor-pointer shrink-0 ${
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl text-lg sm:text-xl flex items-center justify-center shrink-0 transition-all cursor-pointer ${
                     icono === ic
-                      ? 'bg-blue-100 dark:bg-blue-900 border-blue-500 shadow-xs scale-110'
-                      : 'bg-gray-50 dark:bg-[#131b2e] border-gray-200 dark:border-slate-800 hover:border-gray-300'
+                      ? 'bg-blue-600 text-white scale-110 shadow-md ring-2 ring-blue-400'
+                      : 'bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700'
                   }`}
                 >
                   {ic}
@@ -466,48 +404,51 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
           {/* Nombre del Rubro */}
           <div>
             <label className="font-bold text-gray-700 dark:text-slate-200 mb-1 block">
-              {esServicio ? 'Nombre del Servicio o Actividad *' : 'Nombre del Rubro o Producto *'}
+              Nombre del Rubro o Producto *
             </label>
             <input
               type="text"
               required
               value={nombre}
               onChange={e => handleNameChange(e.target.value)}
-              placeholder={esServicio ? "Ej. Flete La Grita, Mano de Obra, Calibrado..." : "Ej. Papa Amarilla, Tomate Manzano..."}
-              className="w-full bg-gray-50 dark:bg-[#131b2e] border border-gray-300 dark:border-slate-700 rounded-xl p-2.5 font-bold text-gray-900 dark:text-white outline-none focus:border-blue-500 min-h-[44px]"
+              placeholder="Ej. Papa Amarilla, Tomate Manzano, Cebolla..."
+              className="w-full bg-gray-50 dark:bg-[#131b2e] border border-gray-300 dark:border-slate-700 rounded-xl p-2.5 sm:p-3 font-extrabold text-gray-900 dark:text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[44px]"
             />
           </div>
 
           {/* Categoría y Empaque */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Categoría */}
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="font-bold text-gray-700 dark:text-slate-200">Categoría</label>
-                <button
-                  type="button"
-                  onClick={() => setIsCreatingCategory(!isCreatingCategory)}
-                  className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
-                >
-                  {isCreatingCategory ? 'Cancelar' : '+ Nueva Categoría'}
-                </button>
+                {onAddCustomCategory && (
+                  <button
+                    type="button"
+                    onClick={() => setIsCreatingCategory(!isCreatingCategory)}
+                    className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                  >
+                    {isCreatingCategory ? 'Cancelar' : '+ Nueva Categoría'}
+                  </button>
+                )}
               </div>
 
               {isCreatingCategory ? (
-                <div className="flex gap-1.5 animate-fade-in">
+                <div className="flex gap-1.5">
                   <input
                     type="text"
                     value={newCategoryName}
                     onChange={e => setNewCategoryName(e.target.value)}
-                    placeholder="Nombre nueva categoría..."
-                    className="w-full bg-gray-50 dark:bg-[#131b2e] border border-blue-400 rounded-xl p-2 text-xs font-bold outline-none"
+                    placeholder="Ej. Frutas Especiales"
+                    className="w-full bg-gray-50 dark:bg-[#131b2e] border border-blue-500 rounded-xl p-2 font-bold text-xs"
                     autoFocus
                   />
                   <button
                     type="button"
-                    onClick={handleCreateCustomCategory}
-                    className="px-3 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-bold shrink-0 cursor-pointer"
+                    onClick={handleSaveCustomCategory}
+                    className="px-3 bg-blue-600 text-white rounded-xl font-bold text-xs shrink-0"
                   >
-                    Crear
+                    Guardar
                   </button>
                 </div>
               ) : (
@@ -517,15 +458,18 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
                   className="w-full bg-gray-50 dark:bg-[#131b2e] border border-gray-300 dark:border-slate-700 rounded-xl p-2.5 font-bold text-gray-900 dark:text-white outline-none focus:border-blue-500 min-h-[44px] cursor-pointer"
                 >
                   {combinedCategories.map(cat => (
-                    <option key={cat.id} value={cat.nombre}>{cat.icono} {cat.nombre}</option>
+                    <option key={cat.id} value={cat.nombre}>
+                      {cat.icono} {cat.nombre}
+                    </option>
                   ))}
                 </select>
               )}
             </div>
 
+            {/* Presentación / Empaque */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="font-bold text-gray-700 dark:text-slate-200">{esServicio ? 'Unidad de Medida' : 'Presentación / Empaque'}</label>
+                <label className="font-bold text-gray-700 dark:text-slate-200">Presentación / Empaque</label>
                 <button
                   type="button"
                   onClick={() => setIsCreatingEmpaque(!isCreatingEmpaque)}
@@ -536,21 +480,21 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
               </div>
 
               {isCreatingEmpaque ? (
-                <div className="flex gap-1.5 animate-fade-in">
+                <div className="flex gap-1.5">
                   <input
                     type="text"
                     value={newEmpaqueName}
                     onChange={e => setNewEmpaqueName(e.target.value)}
-                    placeholder="Ej. Guacal, Tonelada..."
-                    className="w-full bg-gray-50 dark:bg-[#131b2e] border border-blue-400 rounded-xl p-2 text-xs font-bold outline-none"
+                    placeholder="Ej. Huacal, Malla 5Kg..."
+                    className="w-full bg-gray-50 dark:bg-[#131b2e] border border-blue-500 rounded-xl p-2 font-bold text-xs"
                     autoFocus
                   />
                   <button
                     type="button"
-                    onClick={handleCreateCustomEmpaque}
-                    className="px-3 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-bold shrink-0 cursor-pointer"
+                    onClick={handleSaveCustomEmpaque}
+                    className="px-3 bg-blue-600 text-white rounded-xl font-bold text-xs shrink-0"
                   >
-                    Añadir
+                    Guardar
                   </button>
                 </div>
               ) : (
@@ -579,7 +523,7 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
           {/* Peso del Bulto */}
           <div>
             <label className="font-bold text-gray-700 dark:text-slate-200 mb-1 block">
-              {esServicio ? 'Cantidad Base' : 'Peso del Bulto / Empaque (Kg) *'}
+              Peso del Bulto / Empaque (Kg) *
             </label>
             <input
               type="number"
@@ -597,7 +541,7 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
           <div className="bg-gray-50 dark:bg-[#131b2e] border border-gray-200 dark:border-slate-800 rounded-2xl p-3.5 flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-gray-700 dark:text-slate-200 uppercase">
-                {esServicio ? 'Costo Base o Tarifa' : 'Moneda y Costo de Compra'}
+                Moneda y Costo de Adquisición
               </span>
               <div className="flex bg-white dark:bg-[#0f172a] p-0.5 rounded-lg border border-gray-300 dark:border-slate-700">
                 {(['COP', 'USD', 'VES'] as MonedaCosto[]).map(m => (
@@ -606,7 +550,7 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
                     type="button"
                     onClick={() => {
                       setMonedaCosto(m);
-                      if (m === 'COP' && costoEmpaque < 500) setCostoEmpaque(90000);
+                      if (m === 'COP' && costoEmpaque < 500) setCostoEmpaque(100000);
                       if (m === 'USD' && costoEmpaque > 1000) setCostoEmpaque(25);
                       if (m === 'VES' && costoEmpaque > 5000) setCostoEmpaque(1500);
                     }}
@@ -702,72 +646,19 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="font-bold text-gray-700 dark:text-slate-200 mb-1 block">
-                  Costo ({monedaCosto}) *
-                </label>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step={monedaCosto === 'COP' ? '1000' : '0.1'}
-                  min="0.01"
-                  required
-                  value={costoEmpaque}
-                  onChange={e => setCostoEmpaque(parseLocaleNumber(e.target.value, 0))}
-                  className="w-full bg-white dark:bg-[#0f172a] border border-gray-300 dark:border-slate-700 rounded-xl p-2.5 font-black text-gray-900 dark:text-white outline-none focus:border-blue-500 min-h-[44px]"
-                />
-              </div>
-
-              <div>
-                <label className="font-bold text-gray-700 dark:text-slate-200 mb-1 block">
-                  {esServicio ? 'Gasto Adicional ($ USD)' : 'Flete por Bulto ($ USD)'}
-                </label>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step="0.05"
-                  min="0"
-                  value={fleteUnitario}
-                  onChange={e => setFleteUnitario(parseLocaleNumber(e.target.value, 0))}
-                  placeholder="0.50"
-                  className="w-full bg-white dark:bg-[#0f172a] border border-gray-300 dark:border-slate-700 rounded-xl p-2.5 font-bold text-gray-900 dark:text-white outline-none focus:border-blue-500 min-h-[44px]"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Margen y Precio Base CSV */}
-          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="font-bold text-purple-700 dark:text-purple-300 mb-1 block">
-                Precio Base CSV (USDT)
+              <label className="font-bold text-gray-700 dark:text-slate-200 mb-1 block">
+                Costo de Adquisición ({monedaCosto}) *
               </label>
-              <div className="flex items-center gap-1 bg-gray-50 dark:bg-[#131b2e] border border-gray-300 dark:border-slate-700 rounded-xl p-1.5 min-h-[44px]">
-                <span className="text-xs font-bold text-gray-400 pl-2">$</span>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step="0.10"
-                  min="0.10"
-                  value={precioBaseUSDT}
-                  onChange={e => setPrecioBaseUSDT(parseLocaleNumber(e.target.value, 1))}
-                  className="w-full bg-transparent font-black text-purple-900 dark:text-purple-200 text-center outline-none"
-                />
-                <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 pr-2">USDT</span>
-              </div>
-            </div>
-
-            <div>
-              <label className="font-bold text-emerald-700 dark:text-emerald-400 mb-1 block">Margen Detal (% Deseado)</label>
               <input
                 type="number"
                 inputMode="decimal"
-                step="5"
-                min="0"
-                value={margenPorcentaje}
-                onChange={e => setMargenPorcentaje(parseLocaleNumber(e.target.value, 0))}
-                className="w-full bg-gray-50 dark:bg-[#131b2e] border border-gray-300 dark:border-slate-700 rounded-xl p-2.5 font-black text-emerald-600 dark:text-emerald-400 text-center outline-none focus:border-blue-500 min-h-[44px]"
+                step={monedaCosto === 'COP' ? '1000' : '0.1'}
+                min="0.01"
+                required
+                value={costoEmpaque}
+                onChange={e => setCostoEmpaque(parseLocaleNumber(e.target.value, 0))}
+                className="w-full bg-white dark:bg-[#0f172a] border border-gray-300 dark:border-slate-700 rounded-xl p-2.5 font-black text-gray-900 dark:text-white outline-none focus:border-blue-500 min-h-[44px]"
               />
             </div>
           </div>
@@ -851,22 +742,6 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
                         type="button"
                         onClick={() => {
                           setFormulaPersonalizadaItem({
-                            variableEntrada: 'costo_origen_kilo',
-                            monedaResultado: 'VES',
-                            pasos: [
-                              { id: 'p-1', nombre: 'Paso 1: Margen', op: 'percent_add', val: 35, tipoValor: 'manual', activo: true }
-                            ]
-                          });
-                        }}
-                        className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
-                      >
-                        🌐 Origen + 35%
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormulaPersonalizadaItem({
                             variableEntrada: 'costo_origen_empaque',
                             monedaResultado: 'USD',
                             pasos: [
@@ -879,6 +754,22 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
                         className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
                       >
                         🌟 Feria (100.000 ÷ 3.2 ÷ 787 ÷ 22 = $1.80)
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormulaPersonalizadaItem({
+                            variableEntrada: 'costo_origen_kilo',
+                            monedaResultado: 'VES',
+                            pasos: [
+                              { id: 'p-1', nombre: 'Paso 1: Margen', op: 'percent_add', val: 35, tipoValor: 'manual', activo: true }
+                            ]
+                          });
+                        }}
+                        className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
+                      >
+                        🌐 Origen + 35%
                       </button>
 
                       <button
@@ -950,7 +841,6 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
                       <span className="text-[11px] font-bold text-gray-700 dark:text-slate-300 uppercase">Pasos Encadenados ({pasosItemList.length}):</span>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {pasosItemList.map((p, idx) => {
-                          const resStep = CostingCalculator.resolveStepValue(p, tasas);
                           return (
                             <div key={p.id} className="p-2.5 bg-gray-50 dark:bg-[#131b2e] border border-gray-200 dark:border-slate-700 rounded-xl flex flex-col gap-1.5">
                               <div className="flex items-center justify-between">
@@ -1001,27 +891,26 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
                                   className="w-full bg-white dark:bg-[#0f172a] border border-gray-300 dark:border-slate-700 rounded p-1 text-[11px] font-bold"
                                 >
                                   <option value="div">÷ Divide</option>
-                                  <option value="mul">× Mult.</option>
+                                  <option value="mul">× Multiplica</option>
                                   <option value="add">+ Suma</option>
                                   <option value="sub">- Resta</option>
-                                  <option value="percent_add">+% Margen</option>
-                                  <option value="percent_sub">-% Desc.</option>
-                                  <option value="none">⚪ Omitir</option>
+                                  <option value="percent_add">+ % Suma Porcentual</option>
+                                  <option value="percent_sub">- % Resta Porcentual</option>
                                 </select>
 
-                                {p.tipoValor && p.tipoValor !== 'manual' ? (
-                                  <div className="bg-purple-100 dark:bg-purple-950/60 rounded p-1 text-[10px] font-black text-center truncate flex items-center justify-center">
-                                    {resStep.label}
-                                  </div>
-                                ) : (
+                                {p.tipoValor === 'manual' ? (
                                   <input
                                     type="number"
                                     inputMode="decimal"
-                                    step="any"
-                                    value={p.val === 0 ? '0' : p.val}
-                                    onChange={e => handleUpdatePasoItem(p.id, { val: parseLocaleNumber(e.target.value, 0) })}
-                                    className="w-full bg-white dark:bg-[#0f172a] border border-gray-300 dark:border-slate-700 rounded p-1 text-[11px] font-black text-center"
+                                    step="0.001"
+                                    value={p.val}
+                                    onChange={e => handleUpdatePasoItem(p.id, { val: parseLocaleNumber(e.target.value, 1) })}
+                                    className="w-full bg-white dark:bg-[#0f172a] border border-gray-300 dark:border-slate-700 rounded p-1 text-[11px] font-bold text-center"
                                   />
+                                ) : (
+                                  <div className="w-full bg-gray-100 dark:bg-slate-800 rounded p-1 text-[10px] font-bold text-gray-500 flex items-center justify-center">
+                                    Automático
+                                  </div>
                                 )}
                               </div>
                             </div>
@@ -1047,7 +936,7 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
           <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-[#131b2e] dark:to-slate-900 border border-blue-200 dark:border-blue-800/80 rounded-2xl p-4 flex flex-col gap-2.5 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black text-blue-900 dark:text-blue-200 uppercase tracking-wider">
-                Simulación en Tiempo Real
+                Precio de Venta Calculado (x Kilogramo)
               </span>
               <span className="text-[11px] bg-blue-600 text-white font-black px-2 py-0.5 rounded-md shadow-xs">
                 {formulaDesc.titulo}
@@ -1056,16 +945,22 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
 
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="bg-white/80 dark:bg-[#0f172a]/80 p-2 rounded-xl border border-gray-200 dark:border-slate-800">
-                <span className="text-[10px] text-gray-500 block">Costo Kilo USD</span>
-                <span className="text-xs font-black text-gray-900 dark:text-white">${calculated.costoKiloUSD.toFixed(2)}</span>
+                <span className="text-[10px] text-gray-500 block">Costo Kilo ($ USD)</span>
+                <span className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400">
+                  ${calculated.costoKiloUSD.toFixed(2)}
+                </span>
               </div>
               <div className="bg-white/80 dark:bg-[#0f172a]/80 p-2 rounded-xl border border-gray-200 dark:border-slate-800">
-                <span className="text-[10px] text-gray-500 block">Venta Detal USD</span>
-                <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">${calculated.precioVentaDetalKiloUSD.toFixed(2)}</span>
+                <span className="text-[10px] text-gray-500 block">Precio Oficial (Bs / Kg)</span>
+                <span className="text-xs sm:text-sm font-black text-purple-600 dark:text-purple-400">
+                  {CostingCalculator.formatVES(calculated.costoKiloVES)}
+                </span>
               </div>
               <div className="bg-white/80 dark:bg-[#0f172a]/80 p-2 rounded-xl border border-gray-200 dark:border-slate-800">
-                <span className="text-[10px] text-gray-500 block">Precio BCV (Bs/Kg)</span>
-                <span className="text-xs font-black text-purple-600 dark:text-purple-400">{CostingCalculator.formatVES(calculated.precioVentaDetalKiloVES)}</span>
+                <span className="text-[10px] text-gray-500 block">Precio Pesos (COP / Kg)</span>
+                <span className="text-xs sm:text-sm font-black text-amber-600 dark:text-amber-400">
+                  {CostingCalculator.formatCOP(calculated.costoKiloCOP)}
+                </span>
               </div>
             </div>
 
@@ -1109,33 +1004,32 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
                 </div>
                 <div className="sm:col-span-2">
                   <label className="font-bold text-gray-700 dark:text-slate-200 mb-1 block">Notas / Descripción</label>
-                  <input
-                    type="text"
+                  <textarea
+                    rows={2}
                     value={descripcion}
                     onChange={e => setDescripcion(e.target.value)}
-                    placeholder="Observaciones de calidad, calibre o entrega..."
-                    className="w-full bg-gray-50 dark:bg-[#131b2e] border border-gray-300 dark:border-slate-700 rounded-xl p-2 font-bold text-xs"
+                    placeholder="Detalles sobre calidad, empaque, lote..."
+                    className="w-full bg-gray-50 dark:bg-[#131b2e] border border-gray-300 dark:border-slate-700 rounded-xl p-2 font-medium text-xs"
                   />
                 </div>
               </div>
             )}
           </div>
 
-          {/* Botones de Acción */}
+          {/* Modal Actions */}
           <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-200 dark:border-slate-800">
             {editingItem && onDeleteItem ? (
               <button
                 type="button"
                 onClick={() => {
-                  if (confirm(`¿Eliminar "${editingItem.nombre}" de la hoja de costeo?`)) {
-                    hapticFeedback('warning');
+                  if (confirm(`¿Eliminar ${editingItem.nombre}?`)) {
                     onDeleteItem(editingItem.id);
                     onClose();
                   }
                 }}
-                className="px-3.5 py-2.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-colors cursor-pointer min-h-[44px] active:scale-95"
+                className="px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer min-h-[44px]"
               >
-                <Trash2 size={16} />
+                <Trash2 size={15} />
                 <span>Eliminar</span>
               </button>
             ) : <div />}
@@ -1144,19 +1038,18 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2.5 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl font-bold text-xs sm:text-sm transition-colors cursor-pointer min-h-[44px] active:scale-95"
+                className="px-4 py-2.5 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[44px]"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="px-5 sm:px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-extrabold text-xs sm:text-sm shadow-md transition-transform active:scale-95 cursor-pointer min-h-[44px]"
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer min-h-[44px]"
               >
                 {editingItem ? 'Guardar Cambios' : 'Registrar Saco'}
               </button>
             </div>
           </div>
-
         </form>
       </div>
     </div>
