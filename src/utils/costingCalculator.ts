@@ -659,13 +659,20 @@ export class CostingCalculator {
         : (costoEmpaqueVES / tasaProveedor);
     const costoKiloUSD_Proveedor = (costoBultoUSD_Proveedor + fleteUSD) / kilosNetosAprovechables;
 
-    // 4. PRECIO DE VENTA AL DETAL POR KILO (SEGÚN LA ESTRATEGIA ACTIVA)
+    // 4. PRECIO DE VENTA AL DETAL POR KILO (SEGÚN FIJACIÓN MANUAL O ESTRATEGIA ACTIVA)
     let precioVentaDetalKiloUSD = 0;
     let precioVentaDetalKiloVESRaw = 0;
 
     const baseUSDT = this.resolveItemBasePriceUSDT(item, tasas);
 
-    if (tipoFormula === 'formula_feria_3factores') {
+    // ─── PRIORIDAD 1: PRECIO FIJADO MANUALMENTE POR EL USUARIO EN LA PIZARRA ───
+    if (item.modoPrecioPizarra === 'manual_usd' && typeof item.precioManualFijadoUSD === 'number' && item.precioManualFijadoUSD > 0) {
+      precioVentaDetalKiloUSD = item.precioManualFijadoUSD;
+      precioVentaDetalKiloVESRaw = item.precioManualFijadoUSD * tasaBCV;
+    } else if (item.modoPrecioPizarra === 'manual_ves' && typeof item.precioManualFijadoVES === 'number' && item.precioManualFijadoVES > 0) {
+      precioVentaDetalKiloVESRaw = item.precioManualFijadoVES;
+      precioVentaDetalKiloUSD = tasaBCV > 0 ? Number((item.precioManualFijadoVES / tasaBCV).toFixed(2)) : 0;
+    } else if (tipoFormula === 'formula_feria_3factores') {
       // ─── ESTRATEGIA: FÓRMULA FERIA NATIVA (COP ➔ Divisor ➔ Kilos ➔ BCV) ───
       // Fórmula: [Costo Saco COP] ÷ [Divisor COP/Bs (ej. 3.2)] ÷ [Kilos Netos (ej. 22)] = Bs/Kg
       // Y luego [Bs/Kg] ÷ [Tasa BCV] = USD/Kg ($1.80)

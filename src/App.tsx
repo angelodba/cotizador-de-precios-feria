@@ -375,6 +375,7 @@ export function App() {
               <PizarraPreciosView
                 items={items}
                 tasas={tasas}
+                onUpdateItem={handleSaveItem}
                 onNavigateTab={setActiveTab}
                 onShowToast={showToast}
               />

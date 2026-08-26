@@ -13,15 +13,21 @@ import {
   List,
   Sparkles,
   Tag,
-  PackageCheck
+  PackageCheck,
+  DollarSign,
+  RotateCcw,
+  X,
+  Pencil,
+  CheckCircle2
 } from 'lucide-react';
 import type { ItemCosteo, TasasCosteo, CostingTab } from '../../types/costing';
 import { CostingCalculator } from '../../utils/costingCalculator';
-import { copyToClipboardMobile, shareMobileOrWhatsApp, hapticFeedback, downloadFileMobile } from '../../utils/mobileUtils';
+import { copyToClipboardMobile, shareMobileOrWhatsApp, hapticFeedback, downloadFileMobile, parseLocaleNumber } from '../../utils/mobileUtils';
 
 interface PizarraPreciosViewProps {
   items: ItemCosteo[];
   tasas: TasasCosteo;
+  onUpdateItem?: (item: ItemCosteo) => void;
   onNavigateTab: (tab: CostingTab) => void;
   onShowToast: (msg: string) => void;
 }
@@ -31,6 +37,7 @@ type ViewMode = 'grid' | 'table';
 export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
   items,
   tasas,
+  onUpdateItem,
   onNavigateTab,
   onShowToast
 }) => {
@@ -38,6 +45,12 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+
+  // Estado para el modal de fijación de precio individual
+  const [selectedItemForPrice, setSelectedItemForPrice] = useState<ItemCosteo | null>(null);
+  const [modalMode, setModalMode] = useState<'automatico' | 'manual_usd' | 'manual_ves'>('automatico');
+  const [customUSD, setCustomUSD] = useState<number>(1.50);
+  const [customVES, setCustomVES] = useState<number>(100);
 
   // Calcular todos los items con el motor de costeo
   const calculatedItems = useMemo(() => {
@@ -66,6 +79,62 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
   const handlePrint = () => {
     hapticFeedback('light');
     window.print();
+  };
+
+  const openPriceModal = (item: ItemCosteo) => {
+    hapticFeedback('light');
+    const calc = CostingCalculator.calculateItem(item, tasas);
+    setSelectedItemForPrice(item);
+    
+    if (item.modoPrecioPizarra === 'manual_usd') {
+      setModalMode('manual_usd');
+      setCustomUSD(item.precioManualFijadoUSD || calc.precioVentaDetalKiloUSD);
+      setCustomVES(Math.round((item.precioManualFijadoUSD || calc.precioVentaDetalKiloUSD) * tasas.tasaBCV));
+    } else if (item.modoPrecioPizarra === 'manual_ves') {
+      setModalMode('manual_ves');
+      setCustomVES(item.precioManualFijadoVES || calc.precioVentaDetalKiloVES);
+      setCustomUSD(Number(((item.precioManualFijadoVES || calc.precioVentaDetalKiloVES) / tasas.tasaBCV).toFixed(2)));
+    } else {
+      setModalMode('automatico');
+      setCustomUSD(calc.precioVentaDetalKiloUSD);
+      setCustomVES(calc.precioVentaDetalKiloVES);
+    }
+  };
+
+  const handleSaveCustomPrice = () => {
+    if (!selectedItemForPrice || !onUpdateItem) return;
+    hapticFeedback('success');
+
+    let updated: ItemCosteo = { ...selectedItemForPrice };
+
+    if (modalMode === 'manual_usd') {
+      updated = {
+        ...updated,
+        modoPrecioPizarra: 'manual_usd',
+        precioManualFijadoUSD: customUSD,
+        precioManualFijadoVES: Math.round(customUSD * tasas.tasaBCV)
+      };
+      onShowToast(`🎯 Precio de ${updated.nombre} fijado en $${customUSD.toFixed(2)} USD.`);
+    } else if (modalMode === 'manual_ves') {
+      updated = {
+        ...updated,
+        modoPrecioPizarra: 'manual_ves',
+        precioManualFijadoVES: customVES,
+        precioManualFijadoUSD: Number((customVES / tasas.tasaBCV).toFixed(2))
+      };
+      onShowToast(`🎯 Precio de ${updated.nombre} fijado en ${customVES} Bs.`);
+    } else {
+      updated = {
+        ...updated,
+        modoPrecioPizarra: 'automatico',
+        precioManualFijadoUSD: undefined,
+        precioManualFijadoVES: undefined
+      };
+      onShowToast(`🔄 Precio de ${updated.nombre} restablecido al cálculo automático.`);
+    }
+
+    onUpdateItem(updated);
+    setSelectedItemForPrice(null);
   };
 
   const getWhatsAppText = () => {
@@ -305,50 +374,71 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
         {/* ─── VISTA 1: CUADRÍCULA / CARTELERA ─── */}
         {viewMode === 'grid' && filteredItems.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
-            {filteredItems.map(item => (
-              <div
-                key={item.id}
-                className="bg-gray-50 dark:bg-[#131b2e] border border-gray-200 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between shadow-xs gap-2.5 transition-all hover:border-blue-300 dark:hover:border-blue-800"
-              >
-                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                  <span className="text-2xl sm:text-3xl shrink-0">{item.icono || '🥬'}</span>
-                  <div className="min-w-0">
-                    <h3 className="font-extrabold text-sm sm:text-base text-gray-900 dark:text-white flex items-center gap-1.5 truncate">
-                      <span className="truncate">{item.nombre}</span>
-                      {item.esServicio && (
-                        <span className="text-[10px] font-bold bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-300 px-1.5 py-0.2 rounded shrink-0">
-                          Servicio
+            {filteredItems.map(item => {
+              const isCustom = item.modoPrecioPizarra === 'manual_usd' || item.modoPrecioPizarra === 'manual_ves';
+              return (
+                <div
+                  key={item.id}
+                  className="bg-gray-50 dark:bg-[#131b2e] border border-gray-200 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between shadow-xs gap-2.5 transition-all hover:border-blue-300 dark:hover:border-blue-800 group"
+                >
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <span className="text-2xl sm:text-3xl shrink-0">{item.icono || '🥬'}</span>
+                    <div className="min-w-0">
+                      <h3 className="font-extrabold text-sm sm:text-base text-gray-900 dark:text-white flex items-center gap-1.5 truncate">
+                        <span className="truncate">{item.nombre}</span>
+                        {item.esServicio && (
+                          <span className="text-[10px] font-bold bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-300 px-1.5 py-0.2 rounded shrink-0">
+                            Servicio
+                          </span>
+                        )}
+                        {isCustom && (
+                          <span className="text-[9px] font-extrabold bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded shrink-0">
+                            Precio Fijado
+                          </span>
+                        )}
+                      </h3>
+                      <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-gray-500 dark:text-slate-400 font-medium truncate mt-0.5">
+                        <span className="inline-flex items-center gap-0.5">
+                          <Tag size={11} className="text-gray-400" />
+                          <span>{item.categoria}</span>
                         </span>
+                        <span>•</span>
+                        <span>{item.esServicio ? `Tarifa por ${item.tipoEmpaque}` : `Venta por Kilo (${item.tipoEmpaque})`}</span>
+                      </div>
+
+                      {!item.esServicio && item.precioVentaMayorEmpaqueVES > 0 && (
+                        <div className="text-[10px] text-purple-600 dark:text-purple-400 font-bold mt-1">
+                          Saco {item.pesoEmpaqueKg}Kg: {CostingCalculator.formatVES(item.precioVentaMayorEmpaqueVES)} ({CostingCalculator.formatUSD(item.precioVentaMayorEmpaqueUSD)})
+                        </div>
                       )}
-                    </h3>
-                    <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-gray-500 dark:text-slate-400 font-medium truncate mt-0.5">
-                      <span className="inline-flex items-center gap-0.5">
-                        <Tag size={11} className="text-gray-400" />
-                        <span>{item.categoria}</span>
-                      </span>
-                      <span>•</span>
-                      <span>{item.esServicio ? `Tarifa por ${item.tipoEmpaque}` : `Venta por Kilo (${item.tipoEmpaque})`}</span>
+                    </div>
+                  </div>
+
+                  {/* Precios Bs y USD + Botón de Fijar Precio */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="text-right shrink-0">
+                      <div className="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+                        {CostingCalculator.formatVES(item.precioVentaDetalKiloVES)}
+                      </div>
+                      <div className="text-[11px] sm:text-xs font-bold text-gray-500 dark:text-slate-400">
+                        {CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)} {item.esServicio ? `x ${item.tipoEmpaque}` : 'x Kg'}
+                      </div>
                     </div>
 
-                    {!item.esServicio && item.precioVentaMayorEmpaqueVES > 0 && (
-                      <div className="text-[10px] text-purple-600 dark:text-purple-400 font-bold mt-1">
-                        Saco {item.pesoEmpaqueKg}Kg: {CostingCalculator.formatVES(item.precioVentaMayorEmpaqueVES)} ({CostingCalculator.formatUSD(item.precioVentaMayorEmpaqueUSD)})
-                      </div>
+                    {onUpdateItem && (
+                      <button
+                        onClick={() => openPriceModal(item)}
+                        className="no-print p-2 rounded-xl bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-slate-700 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer shadow-xs min-h-[38px] min-w-[38px] flex items-center justify-center active:scale-90"
+                        title="Fijar o decidir precio de este rubro"
+                        aria-label={`Fijar precio de ${item.nombre}`}
+                      >
+                        <Pencil size={15} />
+                      </button>
                     )}
                   </div>
                 </div>
-
-                {/* Precios Bs y USD */}
-                <div className="text-right shrink-0">
-                  <div className="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
-                    {CostingCalculator.formatVES(item.precioVentaDetalKiloVES)}
-                  </div>
-                  <div className="text-[11px] sm:text-xs font-bold text-gray-500 dark:text-slate-400">
-                    {CostingCalculator.formatUSD(item.precioVentaDetalKiloUSD)} {item.esServicio ? `x ${item.tipoEmpaque}` : 'x Kg'}
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -364,6 +454,7 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
                   <th className="p-3 text-right">Precio Detal ($ USD)</th>
                   <th className="p-3 text-right font-black text-emerald-600 dark:text-emerald-400">Precio Detal (Bs.)</th>
                   <th className="p-3 text-right">Mayor Saco (Bs.)</th>
+                  {onUpdateItem && <th className="p-3 text-center no-print">Acción</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
@@ -372,6 +463,9 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
                     <td className="p-3 font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
                       <span>{item.icono || '🥬'}</span>
                       <span>{item.nombre}</span>
+                      {item.modoPrecioPizarra && item.modoPrecioPizarra !== 'automatico' && (
+                        <span className="text-[9px] font-extrabold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 px-1 rounded">Fijado</span>
+                      )}
                     </td>
                     <td className="p-3 text-gray-500 dark:text-slate-400 font-medium">
                       {item.categoria}
@@ -388,6 +482,16 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
                     <td className="p-3 text-right font-bold text-purple-600 dark:text-purple-400">
                       {item.precioVentaMayorEmpaqueVES > 0 ? CostingCalculator.formatVES(item.precioVentaMayorEmpaqueVES) : '-'}
                     </td>
+                    {onUpdateItem && (
+                      <td className="p-3 text-center no-print">
+                        <button
+                          onClick={() => openPriceModal(item)}
+                          className="px-2.5 py-1 bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                        >
+                          Ajustar
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -401,6 +505,259 @@ export const PizarraPreciosView: React.FC<PizarraPreciosViewProps> = ({
         </div>
 
       </div>
+
+      {/* ─── MODAL INTERACTIVO: DECIDIR Y FIJAR PRECIO EN PIZARRA ──────── */}
+      {selectedItemForPrice && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-slate-800 rounded-3xl w-full max-w-md p-5 sm:p-6 shadow-2xl flex flex-col gap-4 text-gray-900 dark:text-white animate-fade-in my-auto max-h-[92dvh] overflow-y-auto touch-scroll">
+            
+            {/* Cabecera del Modal */}
+            <div className="flex items-center justify-between border-b border-gray-200 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">{selectedItemForPrice.icono || '🥬'}</span>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black">{selectedItemForPrice.nombre}</h3>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 font-medium">
+                    {selectedItemForPrice.categoria} • Empaque: {selectedItemForPrice.pesoEmpaqueKg} Kg
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedItemForPrice(null)}
+                className="text-gray-400 hover:text-gray-700 dark:hover:text-white p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer active:scale-90"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Referencia del Costo Real */}
+            {(() => {
+              const calc = CostingCalculator.calculateItem(selectedItemForPrice, tasas);
+              return (
+                <div className="bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/60 rounded-2xl p-3 flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase text-blue-700 dark:text-blue-300">Costo Real por Kilo</span>
+                    <span className="text-xs font-bold text-gray-500 dark:text-slate-400">
+                      Saco: {selectedItemForPrice.costoEmpaque} {selectedItemForPrice.monedaCosto} ÷ {selectedItemForPrice.pesoEmpaqueKg} Kg
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-black text-sm text-blue-900 dark:text-blue-200">
+                      {CostingCalculator.formatUSD(calc.costoKiloUSD)} / Kg
+                    </span>
+                    <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 block">
+                      ({CostingCalculator.formatVES(calc.costoKiloVES)})
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Selector de Estrategia de Precio */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-extrabold uppercase text-gray-500 dark:text-slate-400 tracking-wider">
+                ¿Cómo deseas fijar el precio en la pizarra?
+              </label>
+
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    hapticFeedback('light');
+                    setModalMode('automatico');
+                  }}
+                  className={`p-2.5 rounded-xl text-xs font-black flex flex-col items-center gap-1 border transition-all cursor-pointer ${
+                    modalMode === 'automatico'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                      : 'bg-gray-50 dark:bg-[#131b2e] border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-100'
+                  }`}
+                >
+                  <RotateCcw size={15} />
+                  <span>Por Costeo</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    hapticFeedback('light');
+                    setModalMode('manual_usd');
+                  }}
+                  className={`p-2.5 rounded-xl text-xs font-black flex flex-col items-center gap-1 border transition-all cursor-pointer ${
+                    modalMode === 'manual_usd'
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                      : 'bg-gray-50 dark:bg-[#131b2e] border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-100'
+                  }`}
+                >
+                  <DollarSign size={15} />
+                  <span>Fijar en $</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    hapticFeedback('light');
+                    setModalMode('manual_ves');
+                  }}
+                  className={`p-2.5 rounded-xl text-xs font-black flex flex-col items-center gap-1 border transition-all cursor-pointer ${
+                    modalMode === 'manual_ves'
+                      ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                      : 'bg-gray-50 dark:bg-[#131b2e] border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-100'
+                  }`}
+                >
+                  <span className="text-sm font-black leading-none">Bs</span>
+                  <span>Fijar en Bs</span>
+                </button>
+              </div>
+            </div>
+
+            {/* OPCIÓN 1: AUTOMÁTICO POR COSTEO */}
+            {modalMode === 'automatico' && (
+              <div className="bg-gray-50 dark:bg-[#131b2e] border border-gray-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col gap-2">
+                <span className="text-xs font-bold text-gray-600 dark:text-slate-300">
+                  El precio se calcula automáticamente con el costo de compra del saco ({selectedItemForPrice.costoEmpaque} {selectedItemForPrice.monedaCosto}) + margen deseado ({selectedItemForPrice.margenPorcentaje}%).
+                </span>
+                <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-slate-800">
+                  <span className="text-xs font-bold text-gray-400">Precio resultante:</span>
+                  <div className="text-right">
+                    <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
+                      {CostingCalculator.formatUSD(CostingCalculator.calculateItem(selectedItemForPrice, tasas).precioVentaDetalKiloUSD)} / Kg
+                    </span>
+                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400 block">
+                      {CostingCalculator.formatVES(CostingCalculator.calculateItem(selectedItemForPrice, tasas).precioVentaDetalKiloVES)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* OPCIÓN 2: FIJAR PRECIO DIRECTO EN DÓLARES */}
+            {modalMode === 'manual_usd' && (
+              <div className="bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/60 rounded-2xl p-4 flex flex-col gap-3">
+                <label className="text-xs font-black text-emerald-800 dark:text-emerald-300 uppercase">
+                  Precio de Venta Fijado en Dólares ($ USD/Kg):
+                </label>
+                
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-black text-emerald-600 dark:text-emerald-400 text-lg">$</span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.05"
+                      min="0.10"
+                      value={customUSD}
+                      onChange={e => {
+                        const val = parseLocaleNumber(e.target.value, 1);
+                        setCustomUSD(val);
+                        setCustomVES(Math.round(val * tasas.tasaBCV));
+                      }}
+                      className="w-full pl-8 pr-3 py-2.5 bg-white dark:bg-[#0f172a] border border-emerald-300 dark:border-emerald-700 rounded-xl font-black text-xl text-emerald-950 dark:text-emerald-100 outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-gray-500">USD / Kg</span>
+                </div>
+
+                {/* Botones de Selección Rápida en $ */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[1.00, 1.20, 1.50, 1.80, 2.00, 2.50, 3.00].map(val => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => {
+                        hapticFeedback('light');
+                        setCustomUSD(val);
+                        setCustomVES(Math.round(val * tasas.tasaBCV));
+                      }}
+                      className="px-2.5 py-1 bg-white dark:bg-[#0f172a] border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-black text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 cursor-pointer"
+                    >
+                      ${val.toFixed(2)}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="text-xs text-gray-500 dark:text-slate-400 pt-2 border-t border-emerald-200/60 dark:border-emerald-900/40 flex items-center justify-between">
+                  <span>Equivale en Pizarra (BCV {tasas.tasaBCV}):</span>
+                  <strong className="text-emerald-700 dark:text-emerald-300 text-sm font-black">
+                    {CostingCalculator.formatVES(Math.round(customUSD * tasas.tasaBCV))}
+                  </strong>
+                </div>
+              </div>
+            )}
+
+            {/* OPCIÓN 3: FIJAR PRECIO DIRECTO EN BOLÍVARES */}
+            {modalMode === 'manual_ves' && (
+              <div className="bg-purple-50/40 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900/60 rounded-2xl p-4 flex flex-col gap-3">
+                <label className="text-xs font-black text-purple-800 dark:text-purple-300 uppercase">
+                  Precio de Venta Fijado en Bolívares (Bs/Kg):
+                </label>
+                
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="5"
+                    min="1"
+                    value={customVES}
+                    onChange={e => {
+                      const val = parseLocaleNumber(e.target.value, 1);
+                      setCustomVES(val);
+                      setCustomUSD(Number((val / tasas.tasaBCV).toFixed(2)));
+                    }}
+                    className="w-full px-3 py-2.5 bg-white dark:bg-[#0f172a] border border-purple-300 dark:border-purple-700 rounded-xl font-black text-xl text-purple-950 dark:text-purple-100 text-center outline-none focus:border-purple-500"
+                  />
+                  <span className="text-xs font-bold text-gray-500">Bs. / Kg</span>
+                </div>
+
+                {/* Botones de Selección Rápida en Bs */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[50, 80, 100, 120, 140, 160, 180, 200].map(val => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => {
+                        hapticFeedback('light');
+                        setCustomVES(val);
+                        setCustomUSD(Number((val / tasas.tasaBCV).toFixed(2)));
+                      }}
+                      className="px-2.5 py-1 bg-white dark:bg-[#0f172a] border border-purple-200 dark:border-purple-800 rounded-lg text-xs font-black text-purple-800 dark:text-purple-300 hover:bg-purple-100 cursor-pointer"
+                    >
+                      {val} Bs
+                    </button>
+                  ))}
+                </div>
+
+                <div className="text-xs text-gray-500 dark:text-slate-400 pt-2 border-t border-purple-200/60 dark:border-purple-900/40 flex items-center justify-between">
+                  <span>Equivale en Dólares:</span>
+                  <strong className="text-purple-700 dark:text-purple-300 text-sm font-black">
+                    ${(customVES / tasas.tasaBCV).toFixed(2)} USD
+                  </strong>
+                </div>
+              </div>
+            )}
+
+            {/* Botones de Acción del Modal */}
+            <div className="flex items-center justify-between gap-3 pt-2 border-t border-gray-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setSelectedItemForPrice(null)}
+                className="px-4 py-2.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-bold min-h-[42px] transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveCustomPrice}
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-black flex items-center gap-1.5 shadow-md transition-all cursor-pointer min-h-[42px] active:scale-95"
+              >
+                <CheckCircle2 size={16} />
+                <span>Aplicar a la Pizarra</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

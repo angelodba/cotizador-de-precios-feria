@@ -99,6 +99,11 @@ export interface ItemCosteo {
   margenMayoristaPorcentaje?: number; // % de ganancia al mayor (ej. 15%)
   precioBaseUSDT?: number;       // Precio base en USDT del archivo CSV (ej. 1.50 Tomate)
   
+  // Fijación directa y personalizada de precio para la Pizarra
+  modoPrecioPizarra?: 'automatico' | 'manual_usd' | 'manual_ves'; // Modo activo de fijación
+  precioManualFijadoUSD?: number; // Precio fijado directamente en Dólares ($/Kg)
+  precioManualFijadoVES?: number; // Precio fijado directamente en Bolívares (Bs/Kg)
+  
   // Soporte para fórmula matemática personalizada exclusiva por rubro
   tipoFormulaItem?: EstrategiaFormulaItem;              // 'heredar_global' | 'formula_personalizada' | etc.
   formulaPersonalizadaItem?: FormulaPersonalizadaCosteo; // Pasos matemáticos exclusivos para este rubro específico
