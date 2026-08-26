@@ -245,10 +245,10 @@ export const HojaCosteoView: React.FC<HojaCosteoViewProps> = ({
           <button
             onClick={onOpenCreateModal}
             className="px-4 sm:px-5 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shadow-md transition-transform active:scale-95 min-h-[42px] cursor-pointer"
-            aria-label="Ingresar nuevo saco o bulto"
+            aria-label="Ingresar nuevo rubro"
           >
             <Plus size={18} />
-            <span>+ Ingresar Saco</span>
+            <span>Ingresar Rubro</span>
           </button>
         </div>
       </header>

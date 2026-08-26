@@ -1046,7 +1046,7 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
                 type="submit"
                 className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer min-h-[44px]"
               >
-                {editingItem ? 'Guardar Cambios' : 'Registrar Saco'}
+                {editingItem ? 'Guardar Cambios' : 'Ingresar Rubro'}
               </button>
             </div>
           </div>
