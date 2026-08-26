@@ -181,13 +181,13 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
       if (editingItem.formulaPersonalizadaItem) {
         setFormulaPersonalizadaItem(JSON.parse(JSON.stringify(editingItem.formulaPersonalizadaItem)));
       } else {
-        const pesoKg = editingItem.pesoEmpaqueKg || 45;
+        const pesoKg = editingItem.pesoEmpaqueKg || 22;
         setFormulaPersonalizadaItem({
           variableEntrada: 'costo_origen_empaque',
           monedaResultado: 'USD',
           pasos: [
             { id: 'p-1', nombre: 'Paso 1: Tasa Divisor', op: 'div', val: 3.2, tipoValor: 'manual', activo: true },
-            { id: 'p-2', nombre: 'Paso 2: Factor Divisa', op: 'div', val: 785, tipoValor: 'manual', activo: true },
+            { id: 'p-2', nombre: 'Paso 2: Factor Divisa', op: 'div', val: 787, tipoValor: 'manual', activo: true },
             { id: 'p-3', nombre: 'Paso 3: Conversión Kilo', op: 'div', val: pesoKg, tipoValor: 'manual', activo: true }
           ]
         });
@@ -198,13 +198,13 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
       setCategoria('Hortalizas');
       setIcono('🥬');
       setTipoEmpaque('Saco');
-      setPesoEmpaqueKg(45);
+      setPesoEmpaqueKg(22);
       setMonedaCosto('COP');
       setTipoTasaCosto('bcv');
       setTasaCompraPersonalizada(tasas.tasaBCV || 76.50);
-      setCostoEmpaque(90000);
+      setCostoEmpaque(100000);
       setFleteUnitario(0.50);
-      setMermaPorcentaje(5);
+      setMermaPorcentaje(0);
       setMargenPorcentaje(30);
       setMargenMayoristaPorcentaje(15);
       setPrecioBaseUSDT(1.50);
@@ -220,8 +220,8 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
         monedaResultado: 'USD',
         pasos: [
           { id: 'p-1', nombre: 'Paso 1: Tasa Divisor', op: 'div', val: 3.2, tipoValor: 'manual', activo: true },
-          { id: 'p-2', nombre: 'Paso 2: Factor Divisa', op: 'div', val: 785, tipoValor: 'manual', activo: true },
-          { id: 'p-3', nombre: 'Paso 3: Conversión Kilo', op: 'div', val: 45, tipoValor: 'manual', activo: true }
+          { id: 'p-2', nombre: 'Paso 2: Factor Divisa', op: 'div', val: 787, tipoValor: 'manual', activo: true },
+          { id: 'p-3', nombre: 'Paso 3: Conversión Kilo', op: 'div', val: 22, tipoValor: 'manual', activo: true }
         ]
       });
     }
@@ -887,17 +887,18 @@ export const CosteoItemModal: React.FC<CosteoItemModalProps> = ({
                         type="button"
                         onClick={() => {
                           setFormulaPersonalizadaItem({
-                            variableEntrada: 'costo_origen_kilo',
+                            variableEntrada: 'costo_origen_empaque',
                             monedaResultado: 'USD',
                             pasos: [
-                              { id: 'p-1', nombre: 'Paso 1: Divisor COP', op: 'div', val: tasas.tasaCompraCOP_USDT || 3.2, tipoValor: 'divisor_cop_usdt', activo: true },
-                              { id: 'p-2', nombre: 'Paso 2: Tasa BCV', op: 'div', val: tasas.tasaBCV, tipoValor: 'tasa_bcv', activo: true }
+                              { id: 'p-1', nombre: 'Paso 1: Divisor COP', op: 'div', val: 3.2, tipoValor: 'manual', activo: true },
+                              { id: 'p-2', nombre: 'Paso 2: Factor Divisa', op: 'div', val: 787, tipoValor: 'manual', activo: true },
+                              { id: 'p-3', nombre: 'Paso 3: Kilos Empaque', op: 'div', val: pesoEmpaqueKg || 22, tipoValor: 'manual', activo: true }
                             ]
                           });
                         }}
                         className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
                       >
-                        🌟 Feria (COP ÷ 3.2 ÷ Kilos ÷ BCV = $ USD)
+                        🌟 Feria (100.000 ÷ 3.2 ÷ 787 ÷ 22 = $1.80)
                       </button>
 
                       <button
