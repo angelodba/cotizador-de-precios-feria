@@ -1,0 +1,204 @@
+/* ==========================================================================
+   BODEGAPP MINIMALIST & CLEAN SAAS DESIGN SYSTEM
+   Focused on Simplicity, Whitespace, Ergonomics, Touch & 100% Mobile Support
+   ========================================================================== */
+
+@import "tailwindcss";
+
+/* ─── 1. VARIABLES GLOBALES, TOKENS & SAFE AREA INSETS (iOS & ANDROID) ──── */
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Outfit', 'Inter', sans-serif;
+  --font-scale: 1;
+
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-success: #10b981;
+  --color-success-hover: #059669;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+
+  /* Safe Area Inset support for iOS Notch, Dynamic Island & Android Navigation Bar */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+
+/* ─── 2. MODOS DE ACCESIBILIDAD Y ESCALA TIPOGRÁFICA ───────────────────────── */
+html.font-grande {
+  --font-scale: 1.15;
+  font-size: 18px;
+}
+
+html.font-extra {
+  --font-scale: 1.30;
+  font-size: 20px;
+}
+
+/* Modo Alto Contraste */
+html.high-contrast {
+  filter: contrast(115%);
+}
+
+html.high-contrast * {
+  border-color: rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark-mode.high-contrast *,
+html:not(.light-theme).high-contrast * {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* ─── 3. ESTILOS BASE Y COMPATIBILIDAD TÁCTIL MÓVIL ────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* Touch & Mobile Ergonomics */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  overscroll-behavior-y: none;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Prevenir auto-zoom en iOS Safari cuando se hace foco en inputs/selects */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Clases de Safe Area Insets */
+.pt-safe {
+  padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+}
+
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+.pl-safe {
+  padding-left: max(0.5rem, env(safe-area-inset-left, 0px));
+}
+
+.pr-safe {
+  padding-right: max(0.5rem, env(safe-area-inset-right, 0px));
+}
+
+.bottom-safe {
+  bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+.h-dvh {
+  height: 100dvh;
+}
+
+.min-h-dvh {
+  min-height: 100dvh;
+}
+
+.max-h-dvh {
+  max-height: 100dvh;
+}
+
+/* Momentum scrolling en iOS */
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+}
+
+/* Ocultar barra de scroll en listas horizontales de categorías */
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar,
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ─── 4. SCROLLBARS MINIMALISTAS ─────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.7);
+}
+
+/* ─── 5. ANIMACIONES SUAVES Y ERGONÓMICAS ─────────────────────────────────── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── 6. ESTILOS DE IMPRESIÓN LIMPIOS ─────────────────────────────────────── */
+@media print {
+  aside, header, nav, .no-print, button, .mobile-bottom-nav {
+    display: none !important;
+  }
+  
+  main, body, html {
+    background: white !important;
+    color: black !important;
+    overflow: visible !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}

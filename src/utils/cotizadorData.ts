@@ -1,0 +1,305 @@
+import type { CotizadorProduct, UnitConversionDef, CotizadorUnidad, CotizadorCategoria, CotizadorRates } from '../types/cotizador';
+
+export const DEFAULT_FORMULA_FERIA: Partial<CotizadorRates> = {
+  tipoFormulaCOP: 'feria_3_factores',
+  tasaCompraCOP_USDT: 3150,
+  factorMargen: 880,
+  tasaDivisaBCV: 765,
+  margenPorcentajeCOP: 25,
+  factorDirectoBCV: 0.000365,
+  formulaPersonalizada: {
+    op1: 'div',
+    val1: 3150,
+    op2: 'mul',
+    val2: 880,
+    op3: 'div',
+    val3: 765
+  },
+  tipoRedondeoBCV: 'entero',
+  tipoRedondeoCOP: 'centena',
+  modoCalculo: 'formula_feria'
+};
+
+export const WEIGHT_UNIT_CONVERSIONS: Record<CotizadorUnidad, UnitConversionDef> = {
+  'Kg':     { factor: 1,           label: 'Kilogramo(s)',  shortLabel: 'Kg',    step: 0.5  },
+  'g':      { factor: 0.001,       label: 'Gramo(s)',      shortLabel: 'g',     step: 50   },
+  'lb':     { factor: 0.45359237,  label: 'Libra(s)',      shortLabel: 'lb',    step: 0.5  },
+  'Unidad': { factor: null,        label: 'Unidad(es)',    shortLabel: 'Und',   step: 1    },
+  'Manojo': { factor: null,        label: 'Manojo(s)',     shortLabel: 'Mnj',   step: 1    },
+  'Saco':   { factor: null,        label: 'Saco(s)',       shortLabel: 'Sco',   step: 1    },
+  'Cesta':  { factor: null,        label: 'Cesta(s)',      shortLabel: 'Ces',   step: 1    },
+  'Paquete':{ factor: null,        label: 'Paquete(s)',    shortLabel: 'Paq',   step: 1    },
+};
+
+export const INITIAL_COTIZADOR_PRODUCTS: CotizadorProduct[] = [
+  // Hortalizas
+  {
+    id: 'prod-tomate',
+    nombre: 'Tomate',
+    categoria: 'hortalizas',
+    unidadDefecto: 'Kg',
+    pesoPromedioDefectoKg: 0.18,
+    taraDefectoKg: 0.00,
+    precioBaseUSD: 1.50,
+    monedaCosto: 'COP',
+    costoOrigen: 90000,
+    costoBaseCOP: 90000,
+    permitePesajeBalanza: true,
+    icono: '🍅',
+    descripcion: 'Tomate perita / manzano fresco'
+  },
+  {
+    id: 'prod-cebolla',
+    nombre: 'Cebolla',
+    categoria: 'hortalizas',
+    unidadDefecto: 'Kg',
+    pesoPromedioDefectoKg: 0.20,
+    taraDefectoKg: 0.00,
+    precioBaseUSD: 1.20,
+    monedaCosto: 'USD',
+    costoOrigen: 1.20,
+    permitePesajeBalanza: true,
+    icono: '🧅',
+    descripcion: 'Cebolla morada / blanca de primera'
+  },
+  {
+    id: 'prod-pimenton',
+    nombre: 'Pimentón',
+    categoria: 'hortalizas',
+    unidadDefecto: 'Kg',
+    pesoPromedioDefectoKg: 0.22,
+    taraDefectoKg: 0.00,
+    precioBaseUSD: 2.00,
+    monedaCosto: 'USD',
+    costoOrigen: 2.00,
+    permitePesajeBalanza: true,
+    icono: '🫑',
+    descripcion: 'Pimentón rojo y verde seleccionado'
+  },
+  {
+    id: 'prod-zanahoria',
+    nombre: 'Zanahoria',
+    categoria: 'hortalizas',
+    unidadDefecto: 'Kg',
+    pesoPromedioDefectoKg: 0.12,
+    taraDefectoKg: 0.00,
+    precioBaseUSD: 1.00,
+    monedaCosto: 'USD',
+    costoOrigen: 1.00,
+    permitePesajeBalanza: true,
+    icono: '🥕',
+    descripcion: 'Zanahoria fresca con tallo limpio'
+  },
+  {
+    id: 'prod-calabacin',
+    nombre: 'Calabacín',
+    categoria: 'hortalizas',
+    unidadDefecto: 'Kg',
+    pesoPromedioDefectoKg: 0.30,
+    taraDefectoKg: 0.00,
+    precioBaseUSD: 1.10,
+    monedaCosto: 'USD',
+    costoOrigen: 1.10,
+    permitePesajeBalanza: true,
+    icono: '🥒',
+    descripcion: 'Calabacín tierno de primera'
+  },
+  {
+    id: 'prod-lechuga',
+    nombre: 'Lechuga',
+    categoria: 'hortalizas',
+    unidadDefecto: 'Unidad',
+    pesoPromedioDefectoKg: 0.45,
+    taraDefectoKg: 0.00,
+    precioBaseUSD: 1.00,
+    monedaCosto: 'USD',
+    costoOrigen: 1.00,
+    permitePesajeBalanza: false,
+    icono: '🥬',
+    descripcion: 'Lechuga romana / americana fresca'
+  },
+
+  // Frutas
+  {
+    id: 'prod-platano',
+    nombre: 'Plátano',
+    categoria: 'frutas',
+    unidadDefecto: 'Kg',
+    pesoPromedioDefectoKg: 0.28,
+    taraDefectoKg: 0.00,
+    precioBaseUSD: 1.50,
+    monedaCosto: 'USD',
+    costoOrigen: 1.50,
+    permitePesajeBalanza: true,
+    icono: '🍌',
+    descripcion: 'Plátano maduro / verde de primera'
+  },
+  {
+    id: 'prod-limon',
+    nombre: 'Limón',
+    categoria: 'frutas',
+    unidadDefecto: 'Kg',
+    pesoPromedioDefectoKg: 0.08,
+    taraDefectoKg: 0.00,
+    precioBaseUSD: 2.50,
+    monedaCosto: 'USD',
+    costoOrigen: 2.50,
+    permitePesajeBalanza: true,
+    icono: '🍋',
+    descripcion: 'Limón persa / criollo jugoso'
+  },
+  {
+    id: 'prod-aguacate',
+    nombre: 'Aguacate',
+    categoria: 'frutas',
+    unidadDefecto: 'Kg',
+    pesoPromedioDefectoKg: 0.35,
+    taraDefectoKg: 0.00,
+    precioBaseUSD: 3.00,
+    monedaCosto: 'USD',
+    costoOrigen: 3.00,
+    permitePesajeBalanza: true,
+    icono: '🥑',
+    descripcion: 'Aguacate injerto / criollo de calidad'
+  },
+  {
+    id: 'prod-cambur',
+    nombre: 'Cambur',
+    categoria: 'frutas',
+    unidadDefecto: 'Kg',
+    pesoPromedioDefectoKg: 0.12,
+    taraDefectoKg: 0.00,
+    precioBaseUSD: 1.00,
+    monedaCosto: 'USD',
+    costoOrigen: 1.00,
+    permitePesajeBalanza: true,
+    icono: '🍌',
+    descripcion: 'Cambur guineo / titiaro dulce'
+  },
+  {
+    id: 'prod-patilla',
+    nombre: 'Patilla',
+    categoria: 'frutas',
+    unidadDefecto: 'Kg',
+    pesoPromedioDefectoKg: 6.00,
+    taraDefectoKg: 0.00,
+    precioBaseUSD: 0.70,
+    monedaCosto: 'USD',
+    costoOrigen: 0.70,
+    permitePesajeBalanza: true,
+    icono: '🍉',
+    descripcion: 'Patilla roja dulce y fresca'
+  },
+  {
+    id: 'prod-melon',
+    nombre: 'Melón',
+    categoria: 'frutas',
+    unidadDefecto: 'Kg',
+    pesoPromedioDefectoKg: 2.00,
+    taraDefectoKg: 0.00,
+    precioBaseUSD: 1.20,
+    monedaCosto: 'USD',
+    costoOrigen: 1.20,
+    permitePesajeBalanza: true,
+    icono: '🍈',
+    descripcion: 'Melón cantaloupe aromático'
+  },
+
+  // Tubérculos
+  {
+    id: 'prod-papa',
+    nombre: 'Papa',
+    categoria: 'tuberculos',
+    unidadDefecto: 'Kg',
+    pesoPromedioDefectoKg: 0.15,
+    taraDefectoKg: 0.00,
+    precioBaseUSD: 1.00,
+    monedaCosto: 'USD',
+    costoOrigen: 1.00,
+    permitePesajeBalanza: true,
+    icono: '🥔',
+    descripcion: 'Papa andina / blanca lavada'
+  },
+  {
+    id: 'prod-yuca',
+    nombre: 'Yuca',
+    categoria: 'tuberculos',
+    unidadDefecto: 'Kg',
+    pesoPromedioDefectoKg: 0.40,
+    taraDefectoKg: 0.00,
+    precioBaseUSD: 0.90,
+    monedaCosto: 'USD',
+    costoOrigen: 0.90,
+    permitePesajeBalanza: true,
+    icono: '🍠',
+    descripcion: 'Yuca blanca fresca y suave'
+  },
+  {
+    id: 'prod-ocumo',
+    nombre: 'Ocumo / Ñame',
+    categoria: 'tuberculos',
+    unidadDefecto: 'Kg',
+    pesoPromedioDefectoKg: 0.50,
+    taraDefectoKg: 0.00,
+    precioBaseUSD: 1.10,
+    monedaCosto: 'USD',
+    costoOrigen: 1.10,
+    permitePesajeBalanza: true,
+    icono: '🫚',
+    descripcion: 'Ocumo chino / ñame de primera'
+  },
+
+  // Aliños
+  {
+    id: 'prod-ajo',
+    nombre: 'Ajo',
+    categoria: 'alinos',
+    unidadDefecto: 'Kg',
+    pesoPromedioDefectoKg: 0.06,
+    taraDefectoKg: 0.00,
+    precioBaseUSD: 4.00,
+    monedaCosto: 'USD',
+    costoOrigen: 4.00,
+    permitePesajeBalanza: true,
+    icono: '🧄',
+    descripcion: 'Ajo morado / cabeza entera'
+  },
+  {
+    id: 'prod-cilantro',
+    nombre: 'Cilantro / Cebollín',
+    categoria: 'alinos',
+    unidadDefecto: 'Manojo',
+    pesoPromedioDefectoKg: 0.10,
+    taraDefectoKg: 0.00,
+    precioBaseUSD: 0.80,
+    monedaCosto: 'USD',
+    costoOrigen: 0.80,
+    permitePesajeBalanza: false,
+    icono: '🌿',
+    descripcion: 'Ramillete fresco de hierbas aromáticas'
+  },
+  {
+    id: 'prod-aji',
+    nombre: 'Ají Dulce / Picante',
+    categoria: 'alinos',
+    unidadDefecto: 'Kg',
+    pesoPromedioDefectoKg: 0.02,
+    taraDefectoKg: 0.00,
+    precioBaseUSD: 3.50,
+    monedaCosto: 'USD',
+    costoOrigen: 3.50,
+    permitePesajeBalanza: true,
+    icono: '🌶️',
+    descripcion: 'Ají dulce venezolano o picante'
+  }
+];
+
+export const COTIZADOR_CATEGORIES: { id: CotizadorCategoria | 'todas'; nombre: string; icono: string }[] = [
+  { id: 'todas',     nombre: 'Todos los Rubros',    icono: '🧺' },
+  { id: 'hortalizas',nombre: 'Hortalizas',           icono: '🥦' },
+  { id: 'frutas',    nombre: 'Frutas',               icono: '🍎' },
+  { id: 'tuberculos',nombre: 'Tubérculos y Raíces',  icono: '🥔' },
+  { id: 'alinos',    nombre: 'Aliños y Hierbas',     icono: '🌿' },
+  { id: 'viveres',   nombre: 'Víveres',              icono: '🛒' },
+  { id: 'otros',     nombre: 'Otros',                icono: '📦' },
+];

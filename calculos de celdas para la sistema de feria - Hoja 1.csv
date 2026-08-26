@@ -1,0 +1,17 @@
+USDT,COP,BCV,,,,,,
+,,,,,,,,
+precio base: 90.000,,USDT,COP,BCV,,,,
+,,"28,57",,"0,00",,,,
+,,,,,,,,
+,,,,,,,,
+Cotizador de Inventario Multimoneda,,,,,,,,
+,,,,,,,,
+Producto,Cantidad,#REF!,Precio BCV,Total USDT,Total COP,Total BCV,Producto,Precio Base (USDT)
+Tomate,2,y,#VALUE!,"0,00","0,00","0,00",Tomate,"1,50"
+,,,,,,,Cebolla,"1,20"
+,,,,,,,Papa,"1,00"
+,,,,,,,Pimentón,"2,00"
+,,,,,,,Zanahoria,"1,00"
+,,,,,,,Plátano,"1,50"
+,,,,,,,Limón,"2,50"
+,,,,,,,Aguacate,"3,00"
